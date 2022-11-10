@@ -51,6 +51,7 @@ import org.apache.calcite.sql.SqlNumericLiteral;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlOperatorBinding;
 import org.apache.calcite.sql.SqlTableFunction;
+import org.apache.calcite.sql.SqlTimestampLiteral;
 import org.apache.calcite.sql.SqlUtil;
 import org.apache.calcite.sql.SqlWindowTableFunction;
 import org.apache.calcite.sql.fun.SqlArrayValueConstructor;
@@ -165,6 +166,10 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
     registerOp(SqlLibraryOperators.SUBSTR_POSTGRESQL,
         new SubstrConvertlet(SqlLibrary.POSTGRESQL));
 
+    registerOp(SqlLibraryOperators.TIMESTAMP_ADD_BIG_QUERY,
+        new TimestampAddConvertlet(SqlLibrary.BIG_QUERY));
+
+
     registerOp(SqlLibraryOperators.NVL, StandardConvertletTable::convertNvl);
     registerOp(SqlLibraryOperators.DECODE,
         StandardConvertletTable::convertDecode);
@@ -262,7 +267,8 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
     registerOp(SqlStdOperatorTable.FLOOR, floorCeilConvertlet);
     registerOp(SqlStdOperatorTable.CEIL, floorCeilConvertlet);
 
-    registerOp(SqlStdOperatorTable.TIMESTAMP_ADD, new TimestampAddConvertlet());
+    registerOp(SqlStdOperatorTable.TIMESTAMP_ADD,
+        new TimestampAddConvertlet(SqlLibrary.STANDARD));
     registerOp(SqlStdOperatorTable.TIMESTAMP_DIFF,
         new TimestampDiffConvertlet());
 
@@ -1824,16 +1830,39 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
 
   /** Convertlet that handles the {@code TIMESTAMPADD} function. */
   private static class TimestampAddConvertlet implements SqlRexConvertlet {
+    private final SqlLibrary library;
+
+    TimestampAddConvertlet(SqlLibrary library) {
+      this.library = library;
+      Preconditions.checkArgument(library == SqlLibrary.STANDARD
+        || library == SqlLibrary.BIG_QUERY);
+    }
+
     @Override public RexNode convertCall(SqlRexContext cx, SqlCall call) {
       // TIMESTAMPADD(unit, count, timestamp)
       //  => timestamp + count * INTERVAL '1' UNIT
       final RexBuilder rexBuilder = cx.getRexBuilder();
-      SqlIntervalQualifier qualifier = call.operand(0);
+      SqlIntervalQualifier qualifier;
+      final SqlBasicCall operandCall;
+      final SqlTimestampLiteral timestamp;
+      final RexNode op1;
+      switch(library) {
+      case BIG_QUERY:
+        operandCall = call.operand(1);
+        qualifier  = operandCall.operand(1);
+        timestamp = call.operand(0);
+        op1 = cx.convertExpression(operandCall.operand(0));
+        break;
+      default:
+        qualifier = call.operand(0);
+        timestamp = call.operand(2);
+        op1 = cx.convertExpression(call.operand(1));
+      }
+
       final TimeFrame timeFrame = cx.getValidator().validateTimeFrame(qualifier);
       final TimeUnit unit = first(timeFrame.unit(), TimeUnit.EPOCH);
       final RelDataType type = cx.getValidator().getValidatedNodeType(call);
-      final RexNode op1 = cx.convertExpression(call.operand(1));
-      final RexNode op2 = cx.convertExpression(call.operand(2));
+      final RexNode op2 = cx.convertExpression(timestamp);
       if (unit == TimeUnit.EPOCH && qualifier.timeFrameName != null) {
         // Custom time frames have a different path. They are kept as names,
         // and then handled by Java functions such as
@@ -1866,8 +1895,8 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
                     RoundingMode.UNNECESSARY));
         break;
       default:
-        interval2Add = multiply(rexBuilder,
-            rexBuilder.makeIntervalLiteral(unit.multiplier, qualifier), op1);
+        interval2Add = multiply(rexBuilder, op1,
+            rexBuilder.makeIntervalLiteral(unit.multiplier, qualifier));
       }
 
       return rexBuilder.makeCall(SqlStdOperatorTable.DATETIME_PLUS,
