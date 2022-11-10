@@ -39,8 +39,8 @@ Unpack the source distribution `.tar.gz` file,
 then build using Gradle:
 
 {% highlight bash %}
-$ tar xvfz apache-calcite-1.30.0-src.tar.gz
-$ cd apache-calcite-1.30.0-src
+$ tar xvfz apache-calcite-1.32.0-src.tar.gz
+$ cd apache-calcite-1.32.0-src
 $ gradle build
 {% endhighlight %}
 
@@ -629,7 +629,7 @@ must:
  * resolve the issue (do not close it as this will be done by the release
 manager);
  * select "Fixed" as resolution cause;
- * mark the appropriate version (e.g., 1.30.0) in the "Fix version" field;
+ * mark the appropriate version (e.g., 1.20.0) in the "Fix version" field;
  * add a comment (e.g., "Fixed in ...") with a hyperlink pointing to the commit
 which resolves the issue (in GitHub or GitBox), and also thank the contributor
 for their contribution.
@@ -713,12 +713,13 @@ Note: release artifacts (dist.apache.org and repository.apache.org) are managed 
 
 Before you start:
 
+* Consult the [release dashboard](https://issues.apache.org/jira/secure/Dashboard.jspa?selectPageId=12333950) to get a
+ quick overview about the state of the release and take appropriate actions in order to resolve pending tickets or
+ move them to another release/backlog.
 * Send an email to [dev@calcite.apache.org](mailto:dev@calcite.apache.org) notifying that RC build process
   is starting and therefore `main` branch is in code freeze until further notice.
 * Set up signing keys as described above.
 * Make sure you are using JDK 8 (not 9 or 10).
-* Make sure `master` branch and `site` branch are in sync, i.e. there is no commit on `site` that has not
-  been applied also to `master`. If you spot missing commits then port them to `master`.
 * Check that `README` and `site/_docs/howto.md` have the correct version number.
 * Check that `site/_docs/howto.md` has the correct Gradle version.
 * Check that `NOTICE` has the current copyright year.
@@ -742,7 +743,7 @@ Before you start:
 * Optional tests using tasks:
   * `./gradlew testSlow`
 * Add release notes to `site/_docs/history.md`. If release notes already exist for the version to be released, but
-  are commented out, remove the comments (`{% comment %}` and `{% endcomment %}`). Include the commit history,
+  are commented out, remove the comments (`{% raw %}{% comment %}{% endraw %}` and `{% raw %}{% endcomment %}{% endraw %}`). Include the commit history,
   names of people who contributed to the release, and say which versions of Java, Guava and operating systems the
   release is tested against.
 * Make sure that
@@ -781,7 +782,7 @@ The release candidate process does not add commits,
 so there's no harm if it fails. It might leave `-rc` tag behind
 which can be removed if required.
 
-You can perform a dry-run release with a help of
+If you wish, you can perform a dry-run release with a help of
 [asflike-release-environment](https://github.com/vlsi/asflike-release-environment);
 it would perform the same steps, but it would push changes to the mock Nexus, Git, and SVN servers.
 
@@ -846,11 +847,8 @@ Verify the staged artifacts in the Nexus repository:
 * Go to [https://repository.apache.org/](https://repository.apache.org/) and login
 * Under `Build Promotion`, click `Staging Repositories`
 * In the `Staging Repositories` tab there should be a line with profile `org.apache.calcite`
+  and status `closed`
 * Navigate through the artifact tree and make sure the .jar, .pom, .asc files are present
-* Check the box on in the first column of the row,
-  and press the 'Close' button to publish the repository at
-  https://repository.apache.org/content/repositories/orgapachecalcite-1000
-  (or a similar URL)
 
 ## Cleaning up after a failed release attempt
 
@@ -951,7 +949,8 @@ Remember that UTC date changes at 4 pm Pacific time.
 
 Svnpubsub will publish to the
 [release repo](https://dist.apache.org/repos/dist/release/calcite) and propagate to the
-[mirrors](https://www.apache.org/dyn/closer.cgi/calcite) within 24 hours.
+[mirrors](https://www.apache.org/dyn/closer.cgi/calcite) almost immediately.
+So there is no need to wait more than fifteen minutes before announcing the release.
 
 If there are now more than 2 releases, clear out the oldest ones:
 
@@ -985,7 +984,9 @@ with a change comment
 (fill in release number and date appropriately).
 Uncheck "Send mail for this update". Under the [releases tab](https://issues.apache.org/jira/projects/CALCITE?selectedItem=com.atlassian.jira.jira-projects-plugin%3Arelease-page&status=released-unreleased)
 of the Calcite project mark the release X.Y.Z as released. If it does not already exist create also
-a new version (e.g., X.Y+1.Z) for the next release.
+a new version (e.g., X.Y+1.Z) for the next release. In order to make the [release dashboard](https://issues.apache.org/jira/secure/Dashboard.jspa?selectPageId=12333950)
+reflect state of the next release, change the fixVersion in the [JIRA filter powering the dashboard](https://issues.apache.org/jira/issues/?filter=12346388)
+and save the changes.
 
 After 24 hours, announce the release by sending an email to
 [announce@apache.org](https://mail-archives.apache.org/mod_mbox/www-announce/) using an `@apache.org`

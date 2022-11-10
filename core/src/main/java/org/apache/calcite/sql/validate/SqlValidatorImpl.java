@@ -28,6 +28,9 @@ import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.RelDataTypeSystem;
 import org.apache.calcite.rel.type.RelRecordType;
+import org.apache.calcite.rel.type.TimeFrame;
+import org.apache.calcite.rel.type.TimeFrameSet;
+import org.apache.calcite.rel.type.TimeFrames;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexPatternFieldRef;
 import org.apache.calcite.rex.RexVisitor;
@@ -239,6 +242,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
   protected final RelDataType unknownType;
   private final RelDataType booleanType;
 
+  protected final TimeFrameSet timeFrameSet;
+
   /**
    * Map of derived RelDataType for each node. This is an IdentityHashMap
    * since in some cases (such as null literals) we need to discriminate by
@@ -293,6 +298,10 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     this.opTab = requireNonNull(opTab, "opTab");
     this.catalogReader = requireNonNull(catalogReader, "catalogReader");
     this.typeFactory = requireNonNull(typeFactory, "typeFactory");
+    final RelDataTypeSystem typeSystem = typeFactory.getTypeSystem();
+    this.timeFrameSet =
+        requireNonNull(typeSystem.deriveTimeFrameSet(TimeFrames.CORE),
+            "timeFrameSet");
     this.config = requireNonNull(config, "config");
 
     // It is assumed that unknown type is nullable by default
@@ -341,6 +350,10 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     return unknownType;
   }
 
+  @Override public TimeFrameSet getTimeFrameSet() {
+    return timeFrameSet;
+  }
+
   @Override public SqlNodeList expandStar(
       SqlNodeList selectList,
       SqlSelect select,
@@ -380,7 +393,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     SelectScope cursorScope = new SelectScope(parentScope, null, select);
     clauseScopes.put(IdPair.of(select, Clause.CURSOR), cursorScope);
     final SelectNamespace selectNs = createSelectNamespace(select, select);
-    String alias = deriveAlias(select, nextGeneratedId++);
+    final String alias = SqlValidatorUtil.alias(select, nextGeneratedId++);
     registerNamespace(cursorScope, alias, selectNs, false);
   }
 
@@ -434,17 +447,13 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     // calls.
     SqlNode expanded = expandSelectExpr(selectItem, scope, select);
     final String alias =
-        deriveAliasNonNull(
-            selectItem,
-            aliases.size());
+        SqlValidatorUtil.alias(selectItem, aliases.size());
 
     // If expansion has altered the natural alias, supply an explicit 'AS'.
     final SqlValidatorScope selectScope = getSelectScope(select);
     if (expanded != selectItem) {
       String newAlias =
-          deriveAliasNonNull(
-              expanded,
-              aliases.size());
+          SqlValidatorUtil.alias(expanded, aliases.size());
       if (!Objects.equals(newAlias, alias)) {
         expanded =
             SqlStdOperatorTable.AS.createCall(
@@ -484,8 +493,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       if (identifier.getSimple().equals(name)) {
         final List<SqlNode> qualifiedNode = new ArrayList<>();
         for (ScopeChild child : requireNonNull(scope, "scope").children) {
-          if (child.namespace.getRowType()
-              .getFieldNames().indexOf(name) >= 0) {
+          if (child.namespace.getRowType().getFieldNames().contains(name)) {
             final SqlIdentifier exp =
                 new SqlIdentifier(
                     ImmutableList.of(child.name, name),
@@ -1742,7 +1750,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       final List<String> aliasList = new ArrayList<>();
       final List<RelDataType> typeList = new ArrayList<>();
       for (Ord<SqlNode> column : Ord.zip(rowConstructor.getOperandList())) {
-        final String alias = deriveAliasNonNull(column.e, column.i);
+        final String alias = SqlValidatorUtil.alias(column.e, column.i);
         aliasList.add(alias);
         final RelDataType type = deriveType(scope, column.e);
         typeList.add(type);
@@ -2077,7 +2085,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       SqlNode exp,
       SelectScope scope,
       final boolean includeSystemVars) {
-    String alias = SqlValidatorUtil.getAlias(exp, -1);
+    final @Nullable String alias = SqlValidatorUtil.alias(exp);
     String uniqueAlias =
         SqlValidatorUtil.uniquify(
             alias, aliases, SqlValidatorUtil.EXPR_SUGGESTER);
@@ -2091,13 +2099,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
   @Override public @Nullable String deriveAlias(
       SqlNode node,
       int ordinal) {
-    return SqlValidatorUtil.getAlias(node, ordinal);
-  }
-
-  private String deriveAliasNonNull(SqlNode node, int ordinal) {
-    return requireNonNull(
-        deriveAlias(node, ordinal),
-        () -> "non-null alias expected for node = " + node + ", ordinal = " + ordinal);
+    return ordinal < 0 ? SqlValidatorUtil.alias(node)
+        : SqlValidatorUtil.alias(node, ordinal);
   }
 
   protected boolean shouldAllowIntermediateOrderBy() {
@@ -2269,9 +2272,9 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       switch (kind) {
       case IDENTIFIER:
       case OVER:
-        alias = deriveAlias(node, -1);
+        alias = SqlValidatorUtil.alias(node);
         if (alias == null) {
-          alias = deriveAliasNonNull(node, nextGeneratedId++);
+          alias = SqlValidatorUtil.alias(node, nextGeneratedId++);
         }
         if (config.identifierExpansion()) {
           newNode = SqlValidatorUtil.addAlias(node, alias);
@@ -2292,7 +2295,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
         // give this anonymous construct a name since later
         // query processing stages rely on it
-        alias = deriveAliasNonNull(node, nextGeneratedId++);
+        alias = SqlValidatorUtil.alias(node, nextGeneratedId++);
         if (config.identifierExpansion()) {
           // Since we're expanding identifiers, we should make the
           // aliases explicit too, otherwise the expanded query
@@ -2527,7 +2530,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     case WITH:
     case OTHER_FUNCTION:
       if (alias == null) {
-        alias = deriveAliasNonNull(node, nextGeneratedId++);
+        alias = SqlValidatorUtil.alias(node, nextGeneratedId++);
       }
       registerQuery(
           parentScope,
@@ -2996,7 +2999,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
       CollectScope cs = new CollectScope(parentScope, usingScope, call);
       final CollectNamespace tableConstructorNs =
           new CollectNamespace(call, cs, enclosingNode);
-      final String alias2 = deriveAliasNonNull(node, nextGeneratedId++);
+      final String alias2 = SqlValidatorUtil.alias(node, nextGeneratedId++);
       registerNamespace(
           usingScope,
           alias2,
@@ -3336,6 +3339,21 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
               fracPrecision,
               "INTERVAL " + qualifier));
     }
+  }
+
+  @Override public TimeFrame validateTimeFrame(SqlIntervalQualifier qualifier) {
+    if (qualifier.timeFrameName == null) {
+      final TimeFrame timeFrame = timeFrameSet.get(qualifier.getUnit());
+      return requireNonNull(timeFrame,
+          () -> "time frame for " + qualifier.getUnit());
+    }
+    final @Nullable TimeFrame timeFrame =
+        timeFrameSet.getOpt(qualifier.timeFrameName);
+    if (timeFrame != null) {
+      return timeFrame;
+    }
+    throw newValidationError(qualifier,
+        RESOURCE.invalidTimeFrame(qualifier.timeFrameName));
   }
 
   /**
@@ -3830,7 +3848,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             || !isRolledUpColumnAllowedInAgg(id, scope, (SqlCall) parent, grandParent)) {
           String context = contextClause != null ? contextClause : parent.getKind().toString();
           throw newValidationError(id,
-              RESOURCE.rolledUpNotAllowed(deriveAliasNonNull(id, 0), context));
+              RESOURCE.rolledUpNotAllowed(SqlValidatorUtil.alias(id, 0),
+                  context));
         }
       }
     }
@@ -4610,9 +4629,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
     // Get or generate alias and add to list.
     final String alias =
-        deriveAliasNonNull(
-            selectItem,
-            aliasList.size());
+        SqlValidatorUtil.alias(selectItem, aliasList.size());
     aliasList.add(alias);
 
     final SelectScope scope = (SelectScope) getWhereScope(parentSelect);
@@ -5635,7 +5652,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
     for (SqlNode measure : measures) {
       assert measure instanceof SqlCall;
-      final String alias = deriveAliasNonNull(measure, aliases.size());
+      final String alias = SqlValidatorUtil.alias(measure, aliases.size());
       aliases.add(alias);
 
       SqlNode expand = expand(measure, scope);
@@ -6741,7 +6758,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             validator.catalogReader.nameMatcher();
         int n = 0;
         for (SqlNode s : SqlNonNullableAccessors.getSelectList(select)) {
-          final String alias = SqlValidatorUtil.getAlias(s, -1);
+          final @Nullable String alias = SqlValidatorUtil.alias(s);
           if (alias != null && nameMatcher.matches(alias, name)) {
             expr = s;
             n++;
