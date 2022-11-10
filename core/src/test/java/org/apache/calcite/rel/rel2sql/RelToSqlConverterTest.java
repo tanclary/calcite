@@ -1800,17 +1800,11 @@ class RelToSqlConverterTest {
         + "< TIMESTAMP '2012-12-12 15:31:00'";
     final String expected = "SELECT *\n"
         + "FROM \"foodmart\".\"product\"\n"
-        + "WHERE (TIMESTAMP '2012-12-12 15:30:00' + 5 * INTERVAL '1' MINUTE) "
+        + "WHERE (TIMESTAMP '2012-12-12 15:30:00' + INTERVAL '1' MINUTE * 5) "
         + "< TIMESTAMP '2012-12-12 15:31:00'";
     sql(sql).withLibrary(SqlLibrary.BIG_QUERY).ok(expected);
   }
 
-  @Test void testBigQueryTimestampDiffFunction() {
-    final String sql = "select timestampdiff(minute, timestamp '2008-12-25 12:30:00', timestamp '2008-12-26 12:30:00')\n"
-        + "from \"foodmart\".\"product\"\n";
-    final String expected = "SELECT TIMESTAMPDIFF(x, y, z)";
-    sql(sql).ok(expected);
-  }
 
   /** Test case for
    * <a href="https://issues.apache.org/jira/browse/CALCITE-3220">[CALCITE-3220]

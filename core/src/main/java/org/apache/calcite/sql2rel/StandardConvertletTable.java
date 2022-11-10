@@ -1846,23 +1846,23 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
       final SqlBasicCall operandCall;
       final SqlTimestampLiteral timestamp;
       final RexNode op1;
+      final RexNode op2;
       switch(library) {
       case BIG_QUERY:
         operandCall = call.operand(1);
         qualifier  = operandCall.operand(1);
-        timestamp = call.operand(0);
         op1 = cx.convertExpression(operandCall.operand(0));
+        op2 = cx.convertExpression(call.operand(0));
         break;
       default:
         qualifier = call.operand(0);
-        timestamp = call.operand(2);
         op1 = cx.convertExpression(call.operand(1));
+        op2 = cx.convertExpression(call.operand(2));
       }
 
       final TimeFrame timeFrame = cx.getValidator().validateTimeFrame(qualifier);
       final TimeUnit unit = first(timeFrame.unit(), TimeUnit.EPOCH);
       final RelDataType type = cx.getValidator().getValidatedNodeType(call);
-      final RexNode op2 = cx.convertExpression(timestamp);
       if (unit == TimeUnit.EPOCH && qualifier.timeFrameName != null) {
         // Custom time frames have a different path. They are kept as names,
         // and then handled by Java functions such as
@@ -1895,8 +1895,8 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
                     RoundingMode.UNNECESSARY));
         break;
       default:
-        interval2Add = multiply(rexBuilder, op1,
-            rexBuilder.makeIntervalLiteral(unit.multiplier, qualifier));
+        interval2Add = multiply(rexBuilder,
+            rexBuilder.makeIntervalLiteral(unit.multiplier, qualifier), op1);
       }
 
       return rexBuilder.makeCall(SqlStdOperatorTable.DATETIME_PLUS,
