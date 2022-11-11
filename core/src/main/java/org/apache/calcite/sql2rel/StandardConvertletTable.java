@@ -1844,7 +1844,6 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
       final RexBuilder rexBuilder = cx.getRexBuilder();
       SqlIntervalQualifier qualifier;
       final SqlBasicCall operandCall;
-      final SqlTimestampLiteral timestamp;
       final RexNode op1;
       final RexNode op2;
       switch(library) {

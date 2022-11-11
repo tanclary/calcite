@@ -639,10 +639,6 @@ public abstract class OperandTypes {
       or(STRING_SAME_SAME,
           and(OperandTypes.SAME_SAME, family(SqlTypeFamily.ARRAY, SqlTypeFamily.ARRAY)));
 
-  public static final SqlSingleOperandTypeChecker STRING_SAME_SAME_OR_ARRAY_SAME_SAME =
-      or(STRING_SAME_SAME,
-          and(OperandTypes.SAME_SAME, family(SqlTypeFamily.ARRAY, SqlTypeFamily.ARRAY)));
-
   public static final SqlSingleOperandTypeChecker ANY =
       family(SqlTypeFamily.ANY);
 
