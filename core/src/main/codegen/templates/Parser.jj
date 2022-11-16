@@ -6519,14 +6519,21 @@ SqlCall TimestampAddBigQueryFunctionCall() :
 {
     final List<SqlNode> args = new ArrayList<SqlNode>();
     final Span s;
-    final SqlIntervalQualifier unit;
-    final SqlNode e;
+    SqlNode e;
+    SqlNode opCall;
+    final SqlIntervalQualifier intervalQualifier;
 }
 {
     <TIMESTAMP_ADD> { s = span(); }
     <LPAREN>
     AddExpression(args, ExprContext.ACCEPT_SUB_QUERY)
-    <COMMA> e = IntervalLiteralOrExpression() { args.add(e); }
+    <COMMA>
+    <INTERVAL>
+    e = UnsignedNumericLiteral()
+    intervalQualifier = TimeUnitOrName()
+    { args.add(SqlStdOperatorTable.INTERVAL.createCall(s.end(this), e,
+                                                                   intervalQualifier));}
+
     <RPAREN> {
       return SqlLibraryOperators.TIMESTAMP_ADD_BIG_QUERY
         .createCall(s.end(this), args);
