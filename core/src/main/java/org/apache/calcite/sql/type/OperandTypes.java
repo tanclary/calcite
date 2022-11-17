@@ -16,6 +16,7 @@
  */
 package org.apache.calcite.sql.type;
 
+import org.apache.calcite.avatica.util.TimeUnitRange;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeComparability;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
@@ -30,12 +31,18 @@ import org.apache.calcite.util.ImmutableIntList;
 import org.apache.calcite.util.Util;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+
+import java.util.Arrays;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
@@ -92,6 +99,16 @@ public abstract class OperandTypes {
   }
 
   /**
+   * Creates a checker that passes if the operand is an interval appropriate for
+   * a given date/time type. For example, the time frame HOUR is appropriate for
+   * type TIMESTAMP or DATE but not TIME.
+   */
+  public static SqlSingleOperandTypeChecker interval(
+      Iterable<TimeUnitRange> ranges) {
+    return new IntervalOperandTypeChecker(ImmutableSet.copyOf(ranges));
+  }
+
+  /**
    * Creates a checker for user-defined functions (including user-defined
    * aggregate functions, table functions, and table macros).
    *
@@ -113,15 +130,20 @@ public abstract class OperandTypes {
    */
   public static SqlOperandTypeChecker or(SqlOperandTypeChecker... rules) {
     return composite(CompositeOperandTypeChecker.Composition.OR,
-        ImmutableList.copyOf(rules), null, null);
+        ImmutableList.copyOf(rules), null, null, null);
   }
 
   /**
    * Creates a checker that passes if all of the rules pass.
    */
   public static SqlOperandTypeChecker and(SqlOperandTypeChecker... rules) {
+    return and_(ImmutableList.copyOf(rules));
+  }
+
+  private static SqlOperandTypeChecker and_(
+      Iterable<SqlOperandTypeChecker> rules) {
     return composite(CompositeOperandTypeChecker.Composition.AND,
-        ImmutableList.copyOf(rules), null, null);
+        ImmutableList.copyOf(rules), null, null, null);
   }
 
   /**
@@ -176,7 +198,7 @@ public abstract class OperandTypes {
       SqlSingleOperandTypeChecker... rules) {
     return new CompositeOperandTypeChecker(
         CompositeOperandTypeChecker.Composition.SEQUENCE,
-        ImmutableList.copyOf(rules), allowedSignatures, null);
+        ImmutableList.copyOf(rules), allowedSignatures, null, null);
   }
 
   /**
@@ -187,7 +209,61 @@ public abstract class OperandTypes {
       SqlSingleOperandTypeChecker... rules) {
     return new CompositeOperandTypeChecker(
         CompositeOperandTypeChecker.Composition.REPEAT,
-        ImmutableList.copyOf(rules), null, range);
+        ImmutableList.copyOf(rules), null, null, range);
+  }
+
+  /**
+   * Creates an operand checker that applies a single-operand checker to
+   * the {@code ordinal}th operand.
+   */
+  public static SqlOperandTypeChecker nth(int ordinal, int operandCount,
+      SqlSingleOperandTypeChecker rule) {
+    SqlSingleOperandTypeChecker[] rules =
+        new SqlSingleOperandTypeChecker[operandCount];
+    Arrays.fill(rules, ANY);
+    rules[ordinal] = rule;
+    return sequence("", rules);
+  }
+
+  /** Creates a CompositeOperandTypeChecker. Outside this package, use
+   * {@link SqlSingleOperandTypeChecker#and(SqlSingleOperandTypeChecker)},
+   * {@link OperandTypes#and}, {@link OperandTypes#or} and similar. */
+  static SqlOperandTypeChecker composite(
+      CompositeOperandTypeChecker.Composition composition,
+      List<? extends SqlOperandTypeChecker> allowedRules,
+      @Nullable String allowedSignatures,
+      @Nullable BiFunction<SqlOperator, String, String> signatureGenerator,
+      @Nullable SqlOperandCountRange range) {
+    final List<SqlOperandTypeChecker> list = new ArrayList<>(allowedRules);
+    switch (composition) {
+    default:
+      break;
+    case AND:
+    case OR:
+      flatten(list, c -> c instanceof CompositeOperandTypeChecker
+          && ((CompositeOperandTypeChecker) c).composition == composition
+          ? ((CompositeOperandTypeChecker) c).getRules()
+          : null);
+    }
+    if (list.size() == 1) {
+      return list.get(0);
+    }
+    return new CompositeOperandTypeChecker(composition,
+        ImmutableList.copyOf(list), allowedSignatures, signatureGenerator, range);
+  }
+
+  /** Helper for {@link #compositeSingle} and {@link #composite}. */
+  private static <E> void flatten(List<E> list,
+      Function<E, @Nullable List<? extends E>> expander) {
+    for (int i  = 0; i < list.size();) {
+      @Nullable List<? extends E> list2 = expander.apply(list.get(i));
+      if (list2 == null) {
+        ++i;
+      } else {
+        list.remove(i);
+        list.addAll(i, list2);
+      }
+    }
   }
 
   /** Creates a CompositeOperandTypeChecker. Outside this package, use
@@ -268,14 +344,6 @@ public abstract class OperandTypes {
       @Override public String getAllowedSignatures(SqlOperator op, String opName) {
         return opName + "(...)";
       }
-
-      @Override public boolean isOptional(int i) {
-        return false;
-      }
-
-      @Override public Consistency getConsistency() {
-        return Consistency.NONE;
-      }
     };
   }
 
@@ -333,6 +401,9 @@ public abstract class OperandTypes {
 
   public static final SqlSingleOperandTypeChecker DATE =
       family(SqlTypeFamily.DATE);
+
+  public static final SqlSingleOperandTypeChecker TIME =
+      family(SqlTypeFamily.TIME);
 
   public static final SqlSingleOperandTypeChecker TIMESTAMP =
       family(SqlTypeFamily.TIMESTAMP);
@@ -509,8 +580,7 @@ public abstract class OperandTypes {
    */
   public static final SqlOperandTypeChecker AT_LEAST_ONE_SAME_VARIADIC =
       new SameOperandTypeChecker(-1) {
-        @Override public SqlOperandCountRange
-        getOperandCountRange() {
+        @Override public SqlOperandCountRange getOperandCountRange() {
           return SqlOperandCountRanges.from(1);
         }
       };
@@ -796,28 +866,6 @@ public abstract class OperandTypes {
       }
       return !validationError;
     }
-
-    @Override public boolean checkOperandTypes(
-        SqlCallBinding callBinding,
-        boolean throwOnFailure) {
-      return checkSingleOperandType(
-          callBinding,
-          callBinding.operand(0),
-          0,
-          throwOnFailure);
-    }
-
-    @Override public SqlOperandCountRange getOperandCountRange() {
-      return SqlOperandCountRanges.of(1);
-    }
-
-    @Override public boolean isOptional(int i) {
-      return false;
-    }
-
-    @Override public Consistency getConsistency() {
-      return Consistency.NONE;
-    }
   }
 
   /** Checker that returns whether a value is a collection (multiset or array)
@@ -870,31 +918,9 @@ public abstract class OperandTypes {
           return !validationError;
         }
 
-        @Override public boolean checkOperandTypes(
-            SqlCallBinding callBinding,
-            boolean throwOnFailure) {
-          return checkSingleOperandType(
-              callBinding,
-              callBinding.operand(0),
-              0,
-              throwOnFailure);
-        }
-
-        @Override public SqlOperandCountRange getOperandCountRange() {
-          return SqlOperandCountRanges.of(1);
-        }
-
         @Override public String getAllowedSignatures(SqlOperator op, String opName) {
           return SqlUtil.getAliasedSignature(op, opName,
               ImmutableList.of("RECORDTYPE(SINGLE FIELD)"));
-        }
-
-        @Override public boolean isOptional(int i) {
-          return false;
-        }
-
-        @Override public Consistency getConsistency() {
-          return Consistency.NONE;
         }
       };
 
@@ -934,28 +960,10 @@ public abstract class OperandTypes {
       return valid;
     }
 
-    @Override public boolean checkOperandTypes(SqlCallBinding callBinding,
-        boolean throwOnFailure) {
-      return checkSingleOperandType(callBinding, callBinding.operand(0), 0,
-          throwOnFailure);
-    }
-
-    @Override public SqlOperandCountRange getOperandCountRange() {
-      return SqlOperandCountRanges.of(1);
-    }
-
     @Override public String getAllowedSignatures(SqlOperator op, String opName) {
       return SqlUtil.getAliasedSignature(op, opName,
           ImmutableList.of("PERIOD (DATETIME, INTERVAL)",
               "PERIOD (DATETIME, DATETIME)"));
-    }
-
-    @Override public boolean isOptional(int i) {
-      return false;
-    }
-
-    @Override public Consistency getConsistency() {
-      return Consistency.NONE;
     }
   }
 }

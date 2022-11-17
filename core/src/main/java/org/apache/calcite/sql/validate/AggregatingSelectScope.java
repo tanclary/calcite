@@ -27,9 +27,14 @@ import org.apache.calcite.sql.SqlUtil;
 import org.apache.calcite.util.ImmutableBitSet;
 import org.apache.calcite.util.Litmus;
 
+import org.apache.calcite.util.Util;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMultiset;
+
+
+import java.util.Collection;
 
 import java.util.List;
 import java.util.Map;
@@ -79,8 +84,16 @@ public class AggregatingSelectScope
 
     final ImmutableList.Builder<ImmutableList<ImmutableBitSet>> builder =
         ImmutableList.builder();
+    boolean groupByDistinct = false;
     if (select.getGroup() != null) {
-      final SqlNodeList groupList = select.getGroup();
+      SqlNodeList groupList = select.getGroup();
+      // if the DISTINCT keyword of GROUP BY is present it can be the only item
+      if (groupList.size() == 1
+          && groupList.get(0).getKind() == SqlKind.GROUP_BY_DISTINCT) {
+        groupList = new SqlNodeList(((SqlCall) groupList.get(0)).getOperandList(),
+            groupList.getParserPosition());
+        groupByDistinct = true;
+      }
       for (SqlNode groupExpr : groupList) {
         SqlValidatorUtil.analyzeGroupItem(this, analyzer, builder,
             groupExpr);
@@ -95,6 +108,20 @@ public class AggregatingSelectScope
     if (analyzer.flatGroupSets.isEmpty()) {
       analyzer.flatGroupSets.add(ImmutableBitSet.of());
     }
+
+    if (groupByDistinct) {
+      assign(analyzer.flatGroupSets, Util.distinctList(analyzer.flatGroupSets));
+    }
+  }
+
+  /** Replaces the contents of {@code target} collection with the contents of
+   * {@code source}. */
+  private static <E> void assign(Collection<E> target, Collection<E> source) {
+    if (source == target) {
+      return;
+    }
+    target.clear();
+    target.addAll(source);
   }
 
   /**
@@ -218,7 +245,6 @@ public class AggregatingSelectScope
   /** Information about an aggregating scope that can only be determined
    * after validation has occurred. Therefore it cannot be populated when
    * the scope is created. */
-  @SuppressWarnings("UnstableApiUsage")
   public static class Resolved {
     public final ImmutableList<SqlNode> extraExprList;
     public final ImmutableList<SqlNode> measureExprList;

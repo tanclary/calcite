@@ -107,10 +107,8 @@ import org.apache.calcite.sql.SqlOperatorBinding;
 import org.apache.calcite.sql.SqlSpecialOperator;
 import org.apache.calcite.sql.fun.SqlLibrary;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
-import org.apache.calcite.sql.test.SqlTestFactory;
 import org.apache.calcite.sql.type.OperandTypes;
 import org.apache.calcite.sql.type.ReturnTypes;
-import org.apache.calcite.sql.type.SqlTypeFactoryImpl;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlConformanceEnum;
 import org.apache.calcite.sql.validate.SqlMonotonicity;
@@ -128,11 +126,14 @@ import org.apache.calcite.util.ImmutableBitSet;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.immutables.value.Value;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
@@ -171,13 +172,14 @@ import static org.junit.jupiter.api.Assertions.fail;
  * for details on the schema.
  *
  * <li>Run the test. It should fail. Inspect the output in
- * {@code build/resources/.../RelOptRulesTest.xml}.
+ * {@code build/resources/.../RelOptRulesTest_actual.xml}
+ * (e.g., {@code diff src/test/resources/.../RelOptRulesTest.xml
+ * build/resources/.../RelOptRulesTest_actual.xml}).
  *
- * <li>Verify that the "planBefore" is the correct
- * translation of your SQL, and that it contains the pattern on which your rule
- * is supposed to fire. If all is well, replace
- * {@code src/test/resources/.../RelOptRulesTest.xml} and
- * with the new {@code build/resources/.../RelOptRulesTest.xml}.
+ * <li>Verify that the "planBefore" is the correct translation of your SQL,
+ * and that it contains the pattern on which your rule is supposed to fire.
+ * If all is well, replace {@code src/test/resources/.../RelOptRulesTest.xml}
+ * with the new {@code build/resources/.../RelOptRulesTest_actual.xml}.
  *
  * <li>Run the test again. It should fail again, but this time it should contain
  * a "planAfter" entry for your rule. Verify that your rule applied its
@@ -190,9 +192,21 @@ import static org.junit.jupiter.api.Assertions.fail;
 class RelOptRulesTest extends RelOptTestBase {
   //~ Methods ----------------------------------------------------------------
 
+  @Nullable
+  private static DiffRepository diffRepos = null;
+
+  @AfterAll
+  public static void checkActualAndReferenceFiles() {
+    if (diffRepos != null) {
+      diffRepos.checkActualAndReferenceFiles();
+    }
+  }
+
   @Override RelOptFixture fixture() {
-    return super.fixture()
+    RelOptFixture fixture = super.fixture()
         .withDiffRepos(DiffRepository.lookup(RelOptRulesTest.class));
+    diffRepos = fixture.diffRepos();
+    return fixture;
   }
 
   private static boolean skipItem(RexNode expr) {
@@ -2128,6 +2142,18 @@ class RelOptRulesTest extends RelOptTestBase {
     sql(sql).withRule(CoreRules.PROJECT_JOIN_TRANSPOSE).check();
   }
 
+  /** Test case for
+   * <a href="https://issues.apache.org/jira/browse/CALCITE-4982">[CALCITE-4982]
+   * NonNull field shouldn't be pushed down into leaf of outer-join
+   * in 'ProjectJoinTransposeRule'</a>. */
+  @Test void testPushProjectPastOutJoinWithCastNonNullExpr() {
+    final String sql = "select e.empno + 1 as c1, coalesce(d.name, b.job, '') as c2\n"
+        + "from emp e\n"
+        + "left join bonus b on e.ename = b.ename\n"
+        + "left join dept d on e.deptno = d.deptno";
+    sql(sql).withRule(CoreRules.PROJECT_JOIN_TRANSPOSE).check();
+  }
+
   @Test void testPushProjectPastSetOp() {
     final String sql = "select sal from\n"
         + "(select * from emp e1 union all select * from emp e2)";
@@ -3409,6 +3435,31 @@ class RelOptRulesTest extends RelOptTestBase {
             PruneEmptyRules.PROJECT_INSTANCE,
             PruneEmptyRules.MINUS_INSTANCE)
         .check();
+  }
+
+  @Test void testEmptyTable() {
+    // table is transformed to empty values and extra project will be removed.
+    final String sql = "select * from EMPTY_PRODUCTS\n";
+    sql(sql)
+        .withRule(
+            PruneEmptyRules.EMPTY_TABLE_INSTANCE,
+            PruneEmptyRules.PROJECT_INSTANCE)
+        .check();
+  }
+
+  @Test void testEmptyTableTransformsComplexQueryToSingleTableScan() {
+    final String sql = "select products.PRODUCTID, products.NAME from products left join\n"
+        + "(select * from products as e\n"
+        + " inner join EMPTY_PRODUCTS as d on e.PRODUCTID = d.PRODUCTID\n"
+        + " where e.SUPPLIERID > 10) dt\n"
+        + " on products.PRODUCTID = dt.PRODUCTID";
+    Collection<RelOptRule> rules = Arrays.asList(
+        PruneEmptyRules.EMPTY_TABLE_INSTANCE,
+        PruneEmptyRules.JOIN_RIGHT_INSTANCE,
+        PruneEmptyRules.FILTER_INSTANCE,
+        PruneEmptyRules.PROJECT_INSTANCE,
+        CoreRules.PROJECT_MERGE);
+    sql(sql).withProgram(HepProgram.builder().addRuleCollection(rules).build()).check();
   }
 
   @Test void testLeftEmptyInnerJoin() {
@@ -7342,9 +7393,6 @@ class RelOptRulesTest extends RelOptTestBase {
       }
     };
 
-    SqlTestFactory.TypeFactoryFactory typeFactorySupplier =
-        conformance -> new SqlTypeFactoryImpl(typeSystem);
-
     // Expected plan:
     // LogicalProject(EXPR$0=[CAST($0):BIGINT NOT NULL], EXPR$1=[$1])
     //   LogicalAggregate(group=[{}], EXPR$0=[$SUM0($1)], EXPR$1=[COUNT($0)])
@@ -7356,7 +7404,7 @@ class RelOptRulesTest extends RelOptTestBase {
     // because type of original expression 'COUNT(DISTINCT comm)' is BIGINT
     // and type of SUM (of BIGINT) is DECIMAL.
     sql("SELECT count(comm), COUNT(DISTINCT comm) FROM emp")
-        .withFactory(f -> f.withTypeFactoryFactory(typeFactorySupplier))
+        .withFactory(f -> f.withTypeSystem(ignore -> typeSystem))
         .withRule(CoreRules.AGGREGATE_EXPAND_DISTINCT_AGGREGATES_TO_JOIN)
         .check();
   }
@@ -7385,9 +7433,6 @@ class RelOptRulesTest extends RelOptTestBase {
       }
     };
 
-    SqlTestFactory.TypeFactoryFactory typeFactoryFactory =
-        conformance -> new SqlTypeFactoryImpl(typeSystem);
-
     // Expected plan:
     // LogicalProject(EXPR$0=[CAST($0):BIGINT], EXPR$1=[$1])
     //  LogicalAggregate(group=[{}], EXPR$0=[SUM($1)], EXPR$1=[SUM($0)]) // RowType[DECIMAL, BIGINT]
@@ -7399,7 +7444,7 @@ class RelOptRulesTest extends RelOptTestBase {
     // because type of original expression 'COUNT(DISTINCT comm)' is BIGINT
     // and type of SUM (of BIGINT) is DECIMAL.
     sql("SELECT SUM(comm), SUM(DISTINCT comm) FROM emp")
-        .withFactory(f -> f.withTypeFactoryFactory(typeFactoryFactory))
+        .withFactory(f -> f.withTypeSystem(ignore -> typeSystem))
         .withRule(CoreRules.AGGREGATE_EXPAND_DISTINCT_AGGREGATES_TO_JOIN)
         .check();
   }
