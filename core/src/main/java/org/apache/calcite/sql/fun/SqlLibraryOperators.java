@@ -192,7 +192,7 @@ public abstract class SqlLibraryOperators {
           null, OperandTypes.SAME_SAME, SqlFunctionCategory.SYSTEM);
 
   /** The "LTRIM(string)" function. */
-  @LibraryOperator(libraries = {ORACLE})
+  @LibraryOperator(libraries = {ORACLE, BIG_QUERY})
   public static final SqlFunction LTRIM =
       new SqlFunction("LTRIM", SqlKind.LTRIM,
           ReturnTypes.ARG0.andThen(SqlTypeTransforms.TO_NULLABLE)
@@ -200,7 +200,7 @@ public abstract class SqlLibraryOperators {
           OperandTypes.STRING, SqlFunctionCategory.STRING);
 
   /** The "RTRIM(string)" function. */
-  @LibraryOperator(libraries = {ORACLE})
+  @LibraryOperator(libraries = {ORACLE, BIG_QUERY})
   public static final SqlFunction RTRIM =
       new SqlFunction("RTRIM", SqlKind.RTRIM,
           ReturnTypes.ARG0.andThen(SqlTypeTransforms.TO_NULLABLE)
@@ -253,14 +253,14 @@ public abstract class SqlLibraryOperators {
           SqlFunctionCategory.STRING);
 
   /** The "GREATEST(value, value)" function. */
-  @LibraryOperator(libraries = {ORACLE})
+  @LibraryOperator(libraries = {ORACLE, BIG_QUERY})
   public static final SqlFunction GREATEST =
       new SqlFunction("GREATEST", SqlKind.GREATEST,
           ReturnTypes.LEAST_RESTRICTIVE.andThen(SqlTypeTransforms.TO_NULLABLE),
           null, OperandTypes.SAME_VARIADIC, SqlFunctionCategory.SYSTEM);
 
   /** The "LEAST(value, value)" function. */
-  @LibraryOperator(libraries = {ORACLE})
+  @LibraryOperator(libraries = {ORACLE, BIG_QUERY})
   public static final SqlFunction LEAST =
       new SqlFunction("LEAST", SqlKind.LEAST,
           ReturnTypes.LEAST_RESTRICTIVE.andThen(SqlTypeTransforms.TO_NULLABLE),
@@ -275,7 +275,7 @@ public abstract class SqlLibraryOperators {
    * <p>It is not defined in the SQL standard, but occurs in Oracle and
    * PostgreSQL.
    */
-  @LibraryOperator(libraries = {ORACLE, POSTGRESQL})
+  @LibraryOperator(libraries = {ORACLE, POSTGRESQL, BIG_QUERY})
   public static final SqlFunction TRANSLATE3 = new SqlTranslate3Function();
 
   @LibraryOperator(libraries = {MYSQL})
@@ -472,13 +472,13 @@ public abstract class SqlLibraryOperators {
           ReturnTypes.VARCHAR_2000, null, OperandTypes.DATETIME,
           SqlFunctionCategory.TIMEDATE);
 
-  @LibraryOperator(libraries = {MYSQL, POSTGRESQL})
+  @LibraryOperator(libraries = {MYSQL, POSTGRESQL, BIG_QUERY})
   public static final SqlFunction LEFT =
       new SqlFunction("LEFT", SqlKind.OTHER_FUNCTION,
           ReturnTypes.ARG0_NULLABLE_VARYING, null,
           OperandTypes.CBSTRING_INTEGER, SqlFunctionCategory.STRING);
 
-  @LibraryOperator(libraries = {MYSQL, POSTGRESQL})
+  @LibraryOperator(libraries = {MYSQL, POSTGRESQL, BIG_QUERY})
   public static final SqlFunction REPEAT =
       new SqlFunction(
           "REPEAT",
@@ -488,7 +488,7 @@ public abstract class SqlLibraryOperators {
           OperandTypes.STRING_INTEGER,
           SqlFunctionCategory.STRING);
 
-  @LibraryOperator(libraries = {MYSQL, POSTGRESQL})
+  @LibraryOperator(libraries = {MYSQL, POSTGRESQL, BIG_QUERY})
   public static final SqlFunction RIGHT =
       new SqlFunction("RIGHT", SqlKind.OTHER_FUNCTION,
           ReturnTypes.ARG0_NULLABLE_VARYING, null,
@@ -512,7 +512,7 @@ public abstract class SqlLibraryOperators {
           OperandTypes.STRING_STRING,
           SqlFunctionCategory.STRING);
 
-  @LibraryOperator(libraries = {MYSQL, POSTGRESQL, ORACLE})
+  @LibraryOperator(libraries = {MYSQL, POSTGRESQL, ORACLE, BIG_QUERY})
   public static final SqlFunction SOUNDEX =
       new SqlFunction("SOUNDEX",
           SqlKind.OTHER_FUNCTION,
@@ -606,7 +606,7 @@ public abstract class SqlLibraryOperators {
           OperandTypes.AT_LEAST_ONE_SAME_VARIADIC,
           SqlFunctionCategory.SYSTEM);
 
-  @LibraryOperator(libraries = {MYSQL})
+  @LibraryOperator(libraries = {MYSQL, BIG_QUERY})
   public static final SqlFunction REVERSE =
       new SqlFunction("REVERSE",
           SqlKind.REVERSE,
@@ -615,7 +615,7 @@ public abstract class SqlLibraryOperators {
           OperandTypes.CHARACTER,
           SqlFunctionCategory.STRING);
 
-  @LibraryOperator(libraries = {MYSQL})
+  @LibraryOperator(libraries = {MYSQL, BIG_QUERY})
   public static final SqlFunction FROM_BASE64 =
       new SqlFunction("FROM_BASE64", SqlKind.OTHER_FUNCTION,
           ReturnTypes.explicit(SqlTypeName.VARBINARY)
@@ -770,7 +770,7 @@ public abstract class SqlLibraryOperators {
           OperandTypes.INTEGER,
           SqlFunctionCategory.STRING);
 
-  @LibraryOperator(libraries = {ORACLE})
+  @LibraryOperator(libraries = {ORACLE, BIG_QUERY})
   public static final SqlFunction TANH =
       new SqlFunction("TANH",
           SqlKind.OTHER_FUNCTION,
@@ -779,7 +779,7 @@ public abstract class SqlLibraryOperators {
           OperandTypes.NUMERIC,
           SqlFunctionCategory.NUMERIC);
 
-  @LibraryOperator(libraries = {ORACLE})
+  @LibraryOperator(libraries = {ORACLE, BIG_QUERY})
   public static final SqlFunction COSH =
       new SqlFunction("COSH",
           SqlKind.OTHER_FUNCTION,
@@ -788,7 +788,7 @@ public abstract class SqlLibraryOperators {
           OperandTypes.NUMERIC,
           SqlFunctionCategory.NUMERIC);
 
-  @LibraryOperator(libraries = {ORACLE})
+  @LibraryOperator(libraries = {ORACLE, BIG_QUERY})
   public static final SqlFunction SINH =
       new SqlFunction("SINH",
           SqlKind.OTHER_FUNCTION,
@@ -797,7 +797,7 @@ public abstract class SqlLibraryOperators {
           OperandTypes.NUMERIC,
           SqlFunctionCategory.NUMERIC);
 
-  @LibraryOperator(libraries = {MYSQL, POSTGRESQL})
+  @LibraryOperator(libraries = {MYSQL, POSTGRESQL, BIG_QUERY})
   public static final SqlFunction MD5 =
       new SqlFunction("MD5", SqlKind.OTHER_FUNCTION,
           ReturnTypes.explicit(SqlTypeName.VARCHAR)
@@ -805,7 +805,7 @@ public abstract class SqlLibraryOperators {
           null, OperandTypes.STRING.or(OperandTypes.BINARY),
           SqlFunctionCategory.STRING);
 
-  @LibraryOperator(libraries = {MYSQL, POSTGRESQL})
+  @LibraryOperator(libraries = {MYSQL, POSTGRESQL, BIG_QUERY})
   public static final SqlFunction SHA1 =
       new SqlFunction("SHA1", SqlKind.OTHER_FUNCTION,
           ReturnTypes.explicit(SqlTypeName.VARCHAR)
