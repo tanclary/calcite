@@ -745,6 +745,13 @@ class UtilTest {
     buf.literal(new Timestamp(0));
     assertEquals("TIMESTAMP '1970-01-01 00:00:00'", buf.getSqlAndClear());
 
+    buf.literal(new Timestamp(1261053296000L));
+    assertEquals("TIMESTAMP '2009-12-17 12:34:56'", buf.getSqlAndClear());
+
+    buf.append("select ");
+    buf.literal(new Timestamp(1261053296000L));
+    assertEquals("select TIMESTAMP '2009-12-17 12:34:56'", buf.getSqlAndClear());
+
     buf.clear();
     assertEquals(0, buf.length());
 
@@ -1588,29 +1595,40 @@ class UtilTest {
     map.put("foo", 1);
     map.put("baz", true);
     map.put("bar", "can't");
+    final String tricky = "string with doublequote\", singlequote', "
+        + "backslash\\, percent20%20, plus+, ampersand&, linefeed\n"
+        + ", carriage return\r, lfcr\n"
+        + "\r.";
+    map.put("tricky", tricky);
     List<Object> list = builder.list();
     map.put("list", list);
     list.add(2);
     list.add(3);
     list.add(builder.list());
     list.add(builder.map());
+    list.add(tricky);
     list.add(null);
     map.put("nullValue", null);
-    assertEquals(
-        "{\n"
-            + "  \"foo\": 1,\n"
-            + "  \"baz\": true,\n"
-            + "  \"bar\": \"can't\",\n"
-            + "  \"list\": [\n"
-            + "    2,\n"
-            + "    3,\n"
-            + "    [],\n"
-            + "    {},\n"
-            + "    null\n"
-            + "  ],\n"
-            + "  \"nullValue\": null\n"
-            + "}",
-        builder.toJsonString(map));
+    final String expected = "{\n"
+        + "  \"foo\": 1,\n"
+        + "  \"baz\": true,\n"
+        + "  \"bar\": \"can't\",\n"
+        + "  \"tricky\": \"string with doublequote\\\", singlequote', "
+        + "backslash\\\\, percent20%20, plus+, ampersand&, linefeed\\n"
+        + ", carriage return\\r, lfcr\\n\\r.\",\n"
+        + "  \"list\": [\n"
+        + "    2,\n"
+        + "    3,\n"
+        + "    [],\n"
+        + "    {},\n"
+        + "    \"string with doublequote\\\", singlequote', backslash\\\\, "
+        + "percent20%20, plus+, ampersand&, linefeed\\n"
+        + ", carriage return\\r, lfcr\\n\\r.\",\n"
+        + "    null\n"
+        + "  ],\n"
+        + "  \"nullValue\": null\n"
+        + "}";
+    assertThat(builder.toJsonString(map), is(expected));
   }
 
   @Test void testCompositeMap() {
@@ -2720,6 +2738,49 @@ class UtilTest {
     assertThat(map.containsKey("zyMurgy", false), is(true));
   }
 
+  /** Test {@link MonotonicSupplier}. */
+  @Test void testMonotonicSupplier() {
+    final MonotonicSupplier<String> monotonicSupplier =
+        new MonotonicSupplier<>();
+
+    // Cannot 'get' before 'accept'
+    try {
+      final String s = monotonicSupplier.get();
+      fail("expected error, got " + s);
+    } catch (IllegalArgumentException e) {
+      assertThat(e.getMessage(), is("accept has not been called"));
+    }
+
+    // Does not accept null
+    try {
+      //noinspection ConstantConditions
+      monotonicSupplier.accept(null);
+      fail("expected error");
+    } catch (NullPointerException e) {
+      assertThat(e.getMessage(), is("element must not be null"));
+    }
+
+    monotonicSupplier.accept("hello");
+
+    // After 'accept' we can call 'get' multiple times
+    final String s = monotonicSupplier.get();
+    assertThat(s, is("hello"));
+
+    final String s2 = monotonicSupplier.get();
+    assertThat(s2, is("hello"));
+
+    // Does not 'accept' twice
+    try {
+      monotonicSupplier.accept("goodbye");
+      fail("expected error");
+    } catch (IllegalArgumentException e) {
+      assertThat(e.getMessage(), is("accept has been called already"));
+    }
+
+    final String s3 = monotonicSupplier.get();
+    assertThat(s3, is("hello"));
+  }
+
   @Test void testNlsStringClone() {
     final NlsString s = new NlsString("foo", "LATIN1", SqlCollation.IMPLICIT);
     assertThat(s.toString(), is("_LATIN1'foo'"));
@@ -2958,6 +3019,7 @@ class UtilTest {
       }
     }
   }
+
   private static <E> Matcher<Iterable<E>> isIterable(final Iterable<E> iterable) {
     final List<E> list = toList(iterable);
     return new TypeSafeMatcher<Iterable<E>>() {

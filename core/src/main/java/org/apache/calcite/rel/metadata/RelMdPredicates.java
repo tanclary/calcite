@@ -149,8 +149,13 @@ public class RelMdPredicates
   /**
    * Infers predicates for a table scan.
    */
-  public RelOptPredicateList getPredicates(TableScan table,
+  public RelOptPredicateList getPredicates(TableScan scan,
       RelMetadataQuery mq) {
+    final BuiltInMetadata.Predicates.Handler handler =
+        scan.getTable().unwrap(BuiltInMetadata.Predicates.Handler.class);
+    if (handler != null) {
+      return handler.getPredicates(scan, mq);
+    }
     return RelOptPredicateList.EMPTY;
   }
 
@@ -278,11 +283,18 @@ public class RelMdPredicates
     final RexBuilder rexBuilder = filter.getCluster().getRexBuilder();
     final RelOptPredicateList inputInfo = mq.getPulledUpPredicates(input);
 
+    // Simplify condition using RexSimplify.
+    final RexNode condition = filter.getCondition();
+    final RexExecutor executor =
+        Util.first(filter.getCluster().getPlanner().getExecutor(), RexUtil.EXECUTOR);
+    final RexSimplify simplify = new RexSimplify(rexBuilder, RelOptPredicateList.EMPTY, executor);
+    final RexNode simplifiedCondition = simplify.simplify(condition);
+
     return Util.first(inputInfo, RelOptPredicateList.EMPTY)
         .union(rexBuilder,
             RelOptPredicateList.of(rexBuilder,
                 RexUtil.retainDeterministic(
-                    RelOptUtil.conjunctions(filter.getCondition()))));
+                    RelOptUtil.conjunctions(simplifiedCondition))));
   }
 
   /**

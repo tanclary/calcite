@@ -274,6 +274,8 @@ public class SqlDialect {
       return DatabaseProduct.DERBY;
     case "EXASOL":
       return DatabaseProduct.EXASOL;
+    case "FIREBOLT":
+      return DatabaseProduct.FIREBOLT;
     case "HIVE":
       return DatabaseProduct.HIVE;
     case "INGRES":
@@ -287,6 +289,7 @@ public class SqlDialect {
     case "PHOENIX":
       return DatabaseProduct.PHOENIX;
     case "PRESTO":
+    case "AWS.ATHENA":
       return DatabaseProduct.PRESTO;
     case "MYSQL (INFOBRIGHT)":
       return DatabaseProduct.INFOBRIGHT;
@@ -324,7 +327,8 @@ public class SqlDialect {
       return DatabaseProduct.H2;
     } else if (upperProductName.contains("VERTICA")) {
       return DatabaseProduct.VERTICA;
-    } else if (upperProductName.contains("GOOGLE BIGQUERY")) {
+    } else if (upperProductName.contains("GOOGLE BIGQUERY")
+        || upperProductName.contains("GOOGLE BIG QUERY")) {
       return DatabaseProduct.BIG_QUERY;
     } else {
       return DatabaseProduct.UNKNOWN;
@@ -485,6 +489,10 @@ public class SqlDialect {
    * <code>INTERVAL '1 2:3:4' DAY(4) TO SECOND(4)</code>. */
   public void unparseSqlIntervalQualifier(SqlWriter writer,
       SqlIntervalQualifier qualifier, RelDataTypeSystem typeSystem) {
+    if (qualifier.timeFrameName != null) {
+      SqlIntervalQualifier.asIdentifier(qualifier).unparse(writer, 0, 0);
+      return;
+    }
     final String start = qualifier.timeUnitRange.startUnit.name();
     final int fractionalSecondPrecision =
         qualifier.getFractionalSecondPrecision(typeSystem);
@@ -681,7 +689,7 @@ public class SqlDialect {
    * @return SQL timestamp literal
    */
   public String quoteTimestampLiteral(Timestamp timestamp) {
-    final SimpleDateFormat format = getDateFormatter("'TIMESTAMP' ''yyyy-MM-DD HH:mm:SS''");
+    final SimpleDateFormat format = getDateFormatter("'TIMESTAMP' ''yyyy-MM-dd HH:mm:ss''");
     return format.format(timestamp);
   }
 
@@ -1305,6 +1313,7 @@ public class SqlDialect {
     DB2("IBM DB2", null, NullCollation.HIGH),
     EXASOL("Exasol", "\"", NullCollation.LOW),
     FIREBIRD("Firebird", null, NullCollation.HIGH),
+    FIREBOLT("Firebolt", "\"", NullCollation.LOW),
     H2("H2", "\"", NullCollation.HIGH),
     HIVE("Apache Hive", null, NullCollation.LOW),
     INFORMIX("Informix", null, NullCollation.HIGH),

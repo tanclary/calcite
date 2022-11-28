@@ -23,7 +23,6 @@ import org.apache.calcite.sql.fun.SqlTrimFunction;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.OperandTypes;
 import org.apache.calcite.sql.validate.SqlValidator;
-import org.apache.calcite.sql.validate.SqlValidatorImpl;
 import org.apache.calcite.sql.validate.SqlValidatorScope;
 
 import com.google.common.collect.ImmutableMap;
@@ -480,7 +479,7 @@ public class SqlJdbcFunctionCall extends SqlFunction {
 
     for (SqlNode operand : call.getOperandList()) {
       RelDataType nodeType = validator.deriveType(scope, operand);
-      ((SqlValidatorImpl) validator).setValidatedNodeType(operand, nodeType);
+      validator.setValidatedNodeType(operand, nodeType);
     }
     return validateOperands(validator, scope, call);
   }
@@ -709,6 +708,7 @@ public class SqlJdbcFunctionCall extends SqlFunction {
       map.put("TRUNCATE", simple(SqlStdOperatorTable.TRUNCATE));
 
       map.put("ASCII", simple(SqlStdOperatorTable.ASCII));
+      map.put("CHAR", simple(SqlLibraryOperators.CHAR));
       map.put("CONCAT", simple(SqlStdOperatorTable.CONCAT));
       map.put("DIFFERENCE", simple(SqlLibraryOperators.DIFFERENCE));
       map.put("INSERT",

@@ -799,8 +799,10 @@ public class RelToSqlConverter extends SqlImplementor
       } else if (list.size() == 1) {
         query = list.get(0);
       } else {
-        query = SqlStdOperatorTable.UNION_ALL.createCall(
-            new SqlNodeList(list, POS));
+        query = list.stream()
+            .map(select -> (SqlNode) select)
+            .reduce((l, r) -> SqlStdOperatorTable.UNION_ALL.createCall(POS, l, r))
+            .get();
       }
     } else {
       // Generate ANSI syntax
@@ -899,7 +901,8 @@ public class RelToSqlConverter extends SqlImplementor
                   sort2,
                   ImmutableList.of(),
                   project.getProjects(),
-                  project.getRowType());
+                  project.getRowType(),
+                  project.getVariablesSet());
           return visit(project2);
         }
       }
@@ -1179,7 +1182,7 @@ public class RelToSqlConverter extends SqlImplementor
   @Override public void addSelect(List<SqlNode> selectList, SqlNode node,
       RelDataType rowType) {
     String name = rowType.getFieldNames().get(selectList.size());
-    String alias = SqlValidatorUtil.getAlias(node, -1);
+    @Nullable String alias = SqlValidatorUtil.alias(node);
     if (alias == null || !alias.equals(name)) {
       node = as(node, name);
     }

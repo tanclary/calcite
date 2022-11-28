@@ -87,13 +87,13 @@ import org.apache.calcite.runtime.CompressionFunctions;
 import org.apache.calcite.runtime.Enumerables;
 import org.apache.calcite.runtime.FlatLists;
 import org.apache.calcite.runtime.FunctionContexts;
-import org.apache.calcite.runtime.GeoFunctions;
 import org.apache.calcite.runtime.JsonFunctions;
 import org.apache.calcite.runtime.Matcher;
 import org.apache.calcite.runtime.Pattern;
 import org.apache.calcite.runtime.RandomFunction;
 import org.apache.calcite.runtime.ResultSetEnumerable;
 import org.apache.calcite.runtime.SortedMultiMap;
+import org.apache.calcite.runtime.SpatialTypeFunctions;
 import org.apache.calcite.runtime.SqlFunctions;
 import org.apache.calcite.runtime.SqlFunctions.FlatProductInputType;
 import org.apache.calcite.runtime.Utilities;
@@ -339,6 +339,8 @@ public enum BuiltInMethod {
   UPPER(SqlFunctions.class, "upper", String.class),
   LOWER(SqlFunctions.class, "lower", String.class),
   ASCII(SqlFunctions.class, "ascii", String.class),
+  CHAR_FROM_ASCII(SqlFunctions.class, "charFromAscii", int.class),
+  CHAR_FROM_UTF8(SqlFunctions.class, "charFromUtf8", int.class),
   REPEAT(SqlFunctions.class, "repeat", String.class, int.class),
   SPACE(SqlFunctions.class, "space", int.class),
   SOUNDEX(SqlFunctions.class, "soundex", String.class),
@@ -391,7 +393,7 @@ public enum BuiltInMethod {
   IS_JSON_OBJECT(JsonFunctions.class, "isJsonObject", String.class),
   IS_JSON_ARRAY(JsonFunctions.class, "isJsonArray", String.class),
   IS_JSON_SCALAR(JsonFunctions.class, "isJsonScalar", String.class),
-  ST_GEOM_FROM_TEXT(GeoFunctions.class, "ST_GeomFromText", String.class),
+  ST_GEOM_FROM_EWKT(SpatialTypeFunctions.class, "ST_GeomFromEWKT", String.class),
   INITCAP(SqlFunctions.class, "initcap", String.class),
   SUBSTRING(SqlFunctions.class, "substring", String.class, int.class,
       int.class),
@@ -399,8 +401,8 @@ public enum BuiltInMethod {
   CHAR_LENGTH(SqlFunctions.class, "charLength", String.class),
   STRING_CONCAT(SqlFunctions.class, "concat", String.class, String.class),
   MULTI_STRING_CONCAT(SqlFunctions.class, "concatMulti", String[].class),
-  FLOOR_DIV(DateTimeUtils.class, "floorDiv", long.class, long.class),
-  FLOOR_MOD(DateTimeUtils.class, "floorMod", long.class, long.class),
+  FLOOR_DIV(Math.class, "floorDiv", long.class, long.class),
+  FLOOR_MOD(Math.class, "floorMod", long.class, long.class),
   ADD_MONTHS(SqlFunctions.class, "addMonths", long.class, int.class),
   ADD_MONTHS_INT(SqlFunctions.class, "addMonths", int.class, int.class),
   SUBTRACT_MONTHS(SqlFunctions.class, "subtractMonths", long.class,
@@ -503,6 +505,22 @@ public enum BuiltInMethod {
       TimeUnitRange.class, long.class),
   UNIX_TIMESTAMP_CEIL(DateTimeUtils.class, "unixTimestampCeil",
       TimeUnitRange.class, long.class),
+  CUSTOM_DATE_ADD(SqlFunctions.class, "customDateAdd",
+      DataContext.class, String.class, int.class, int.class),
+  CUSTOM_DATE_DIFF(SqlFunctions.class, "customDateDiff",
+      DataContext.class, String.class, int.class, int.class),
+  CUSTOM_DATE_FLOOR(SqlFunctions.class, "customDateFloor",
+      DataContext.class, String.class, int.class),
+  CUSTOM_DATE_CEIL(SqlFunctions.class, "customDateCeil",
+      DataContext.class, String.class, int.class),
+  CUSTOM_TIMESTAMP_ADD(SqlFunctions.class, "customTimestampAdd",
+      DataContext.class, String.class, long.class, long.class),
+  CUSTOM_TIMESTAMP_DIFF(SqlFunctions.class, "customTimestampDiff",
+      DataContext.class, String.class, long.class, long.class),
+  CUSTOM_TIMESTAMP_FLOOR(SqlFunctions.class, "customTimestampFloor",
+      DataContext.class, String.class, long.class),
+  CUSTOM_TIMESTAMP_CEIL(SqlFunctions.class, "customTimestampCeil",
+      DataContext.class, String.class, long.class),
   LAST_DAY(SqlFunctions.class, "lastDay", int.class),
   DAYNAME_WITH_TIMESTAMP(SqlFunctions.class,
       "dayNameWithTimestamp", long.class, Locale.class),

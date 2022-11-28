@@ -26,6 +26,7 @@ import org.apache.calcite.rel.core.Filter;
 import org.apache.calcite.rel.core.Join;
 import org.apache.calcite.rel.core.JoinRelType;
 import org.apache.calcite.rel.core.Project;
+import org.apache.calcite.rel.core.Snapshot;
 import org.apache.calcite.rel.core.Sort;
 import org.apache.calcite.rel.core.TableModify;
 import org.apache.calcite.rel.core.TableScan;
@@ -119,6 +120,12 @@ public class RelMdExpressionLineage
    */
   public @Nullable Set<RexNode> getExpressionLineage(TableScan rel,
       RelMetadataQuery mq, RexNode outputExpression) {
+    final BuiltInMetadata.ExpressionLineage.Handler handler =
+        rel.getTable().unwrap(BuiltInMetadata.ExpressionLineage.Handler.class);
+    if (handler != null) {
+      return handler.getExpressionLineage(rel, mq, outputExpression);
+    }
+
     final RexBuilder rexBuilder = rel.getCluster().getRexBuilder();
 
     // Extract input fields referenced by expression
@@ -381,6 +388,18 @@ public class RelMdExpressionLineage
    * Expression lineage from Filter.
    */
   public @Nullable Set<RexNode> getExpressionLineage(Filter rel,
+      RelMetadataQuery mq, RexNode outputExpression) {
+    return mq.getExpressionLineage(rel.getInput(), outputExpression);
+  }
+
+  /**
+   * Expression lineage from Snapshot.
+   * @param rel Snapshot relational expression
+   * @param mq metadata query
+   * @param outputExpression expression which needs to be inferred
+   * @return the inferred lineage, possibly null.
+   */
+  public @Nullable Set<RexNode> getExpressionLineage(Snapshot rel,
       RelMetadataQuery mq, RexNode outputExpression) {
     return mq.getExpressionLineage(rel.getInput(), outputExpression);
   }

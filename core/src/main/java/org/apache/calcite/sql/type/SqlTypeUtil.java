@@ -141,6 +141,28 @@ public abstract class SqlTypeUtil {
   }
 
   /**
+   * Derives component type for ARRAY, MULTISET, MAP when input is sub-query.
+   *
+   * @param origin original component type
+   * @return component type
+   */
+  public static RelDataType deriveCollectionQueryComponentType(
+      SqlTypeName collectionType,
+      RelDataType origin) {
+    switch (collectionType) {
+    case ARRAY:
+    case MULTISET:
+      return origin.isStruct() && origin.getFieldCount() == 1
+          ? origin.getFieldList().get(0).getType() : origin;
+    case MAP:
+      return origin;
+    default:
+      throw new AssertionError(
+          "Impossible to derive component type for " + collectionType);
+    }
+  }
+
+  /**
    * Iterates over all operands, derives their types, and collects them into
    * a list.
    */
@@ -292,6 +314,34 @@ public abstract class SqlTypeUtil {
       }
     }
     return false;
+  }
+
+  /**
+   * Creates a RelDataType having the same type of the sourceRelDataType,
+   * and the same nullability as the targetRelDataType.
+   */
+  public static RelDataType keepSourceTypeAndTargetNullability(RelDataType sourceRelDataType,
+                                             RelDataType targetRelDataType,
+                                             RelDataTypeFactory typeFactory) {
+    if (!targetRelDataType.isStruct()) {
+      return typeFactory.createTypeWithNullability(
+              sourceRelDataType, targetRelDataType.isNullable());
+    }
+    List<RelDataTypeField> targetFields = targetRelDataType.getFieldList();
+    List<RelDataTypeField> sourceFields = sourceRelDataType.getFieldList();
+    ImmutableList.Builder<RelDataTypeField> newTargetField = ImmutableList.builder();
+    for (int i = 0; i < targetRelDataType.getFieldCount(); i++) {
+      RelDataTypeField targetField = targetFields.get(i);
+      RelDataTypeField sourceField = sourceFields.get(i);
+      newTargetField.add(
+          new RelDataTypeFieldImpl(
+              sourceField.getName(),
+              sourceField.getIndex(),
+                  keepSourceTypeAndTargetNullability(
+                          sourceField.getType(), targetField.getType(), typeFactory)));
+    }
+    RelDataType relDataType = typeFactory.createStructType(newTargetField.build());
+    return typeFactory.createTypeWithNullability(relDataType, targetRelDataType.isNullable());
   }
 
   /**
@@ -1036,7 +1086,9 @@ public abstract class SqlTypeUtil {
     assert typeName != null;
 
     final SqlTypeNameSpec typeNameSpec;
-    if (isAtomic(type) || isNull(type) || type.getSqlTypeName() == SqlTypeName.UNKNOWN) {
+    if (isAtomic(type) || isNull(type)
+        || type.getSqlTypeName() == SqlTypeName.UNKNOWN
+        || type.getSqlTypeName() == SqlTypeName.GEOMETRY) {
       int precision = typeName.allowsPrec() ? type.getPrecision() : -1;
       // fix up the precision.
       if (maxPrecision > 0 && precision > maxPrecision) {

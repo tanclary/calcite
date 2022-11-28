@@ -130,6 +130,20 @@ public enum SqlKind {
    */
   OTHER_FUNCTION,
 
+  /**
+   * Input tables have either row semantics or set semantics.
+   * <ul>
+   * <li>Row semantics means that the result of the table function is
+   * decided on a row-by-row basis.
+   * <li>Set semantics means that the outcome of the function depends on how
+   * the data is partitioned.
+   * When the table function is called from a query, the table parameter can
+   * optionally be extended with either a PARTITION BY clause or
+   * an ORDER BY clause or both.
+   * </ul>
+   */
+  SET_SEMANTICS_TABLE,
+
   /** POSITION function. */
   POSITION,
 
@@ -156,6 +170,9 @@ public enum SqlKind {
 
   /** A dynamic parameter. */
   DYNAMIC_PARAM,
+
+  /** The DISTINCT keyword of the GROUP BY clause. */
+  GROUP_BY_DISTINCT,
 
   /**
    * ORDER BY clause.
@@ -674,6 +691,9 @@ public enum SqlKind {
   /** {@code JSON_OBJECTAGG} aggregate function. */
   JSON_OBJECTAGG,
 
+  /** {@code JSON} type function. */
+  JSON_TYPE,
+
   /** {@code UNNEST} operator. */
   UNNEST,
 
@@ -870,6 +890,9 @@ public enum SqlKind {
 
   /** The {@code SINGLE_VALUE} aggregate function. */
   SINGLE_VALUE,
+
+  /** The {@code AGGREGATE} aggregate function. */
+  AGGREGATE_FN,
 
   /** The {@code BIT_AND} aggregate function. */
   BIT_AND,
@@ -1179,7 +1202,7 @@ public enum SqlKind {
                   NULLS_FIRST, NULLS_LAST, COLLECTION_TABLE, TABLESAMPLE,
                   VALUES, WITH, WITH_ITEM, ITEM, SKIP_TO_FIRST, SKIP_TO_LAST,
                   JSON_VALUE_EXPRESSION, UNNEST),
-              AGGREGATE, DML, DDL));
+              SET_QUERY, AGGREGATE, DML, DDL));
 
   /**
    * Category of all SQL statement types.
