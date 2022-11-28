@@ -27,7 +27,6 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.runtime.FlatLists;
-import org.apache.calcite.runtime.Geometries;
 import org.apache.calcite.sql.SqlAggFunction;
 import org.apache.calcite.sql.SqlCollation;
 import org.apache.calcite.sql.SqlIntervalQualifier;
@@ -60,6 +59,7 @@ import com.google.common.collect.TreeRangeSet;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.checker.nullness.qual.PolyNull;
+import org.locationtech.jts.geom.Geometry;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
@@ -73,6 +73,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.IntPredicate;
+import java.util.stream.Collectors;
+
+import static com.google.common.base.Verify.verifyNotNull;
 
 import static org.apache.calcite.linq4j.Nullness.castNonNull;
 
@@ -642,6 +645,9 @@ public class RexBuilder {
 
   boolean canRemoveCastFromLiteral(RelDataType toType, @Nullable Comparable value,
       SqlTypeName fromTypeName) {
+    if (value == null) {
+      return true;
+    }
     final SqlTypeName sqlType = toType.getSqlTypeName();
     if (!RexLiteral.valueMatchesType(value, sqlType, false)) {
       return false;
@@ -676,6 +682,26 @@ public class RexBuilder {
     if (toType.getSqlTypeName() == SqlTypeName.DECIMAL) {
       final BigDecimal decimalValue = (BigDecimal) value;
       return SqlTypeUtil.isValidDecimalValue(decimalValue, toType);
+    }
+
+    if (SqlTypeName.INT_TYPES.contains(sqlType)) {
+      final BigDecimal decimalValue = (BigDecimal) value;
+      final int s = decimalValue.scale();
+      if (s != 0) {
+        return false;
+      }
+      long l = decimalValue.longValue();
+      switch (sqlType) {
+      case TINYINT:
+        return l >= Byte.MIN_VALUE && l <= Byte.MAX_VALUE;
+      case SMALLINT:
+        return l >= Short.MIN_VALUE && l <= Short.MAX_VALUE;
+      case INTEGER:
+        return l >= Integer.MIN_VALUE && l <= Integer.MAX_VALUE;
+      case BIGINT:
+      default:
+        return true;
+      }
     }
 
     return true;
@@ -1260,7 +1286,10 @@ public class RexBuilder {
    */
   public RexLiteral makeIntervalLiteral(
       SqlIntervalQualifier intervalQualifier) {
-    assert intervalQualifier != null;
+    verifyNotNull(intervalQualifier);
+    if (intervalQualifier.timeFrameName != null) {
+      return makePreciseStringLiteral(intervalQualifier.timeFrameName);
+    }
     return makeFlag(intervalQualifier.timeUnitRange);
   }
 
@@ -1332,10 +1361,14 @@ public class RexBuilder {
     if (areAssignable(arg, ranges)) {
       final Sarg sarg = toSarg(Comparable.class, ranges, RexUnknownAs.UNKNOWN);
       if (sarg != null) {
-        final RexNode range0 = ranges.get(0);
+        final List<RelDataType> types = ranges.stream()
+            .map(RexNode::getType)
+            .collect(Collectors.toList());
+        RelDataType sargType = Objects.requireNonNull(typeFactory.leastRestrictive(types),
+            () -> "Can't find leastRestrictive type for SARG among " + types);
         return makeCall(SqlStdOperatorTable.SEARCH,
             arg,
-            makeSearchArgumentLiteral(sarg, range0.getType()));
+            makeSearchArgumentLiteral(sarg, sargType));
       }
     }
     return RexUtil.composeDisjunction(this, ranges.stream()
@@ -1372,8 +1405,11 @@ public class RexBuilder {
           Sarg.of(RexUnknownAs.UNKNOWN,
               ImmutableRangeSet.<Comparable>of(
                   Range.closed(lowerValue, upperValue)));
+      List<RelDataType> types = ImmutableList.of(lower.getType(), upper.getType());
+      RelDataType sargType = Objects.requireNonNull(typeFactory.leastRestrictive(types),
+          () -> "Can't find leastRestrictive type for SARG among " + types);
       return makeCall(SqlStdOperatorTable.SEARCH, arg,
-          makeSearchArgumentLiteral(sarg, lower.getType()));
+          makeSearchArgumentLiteral(sarg, sargType));
     }
     return makeCall(SqlStdOperatorTable.AND,
         makeCall(SqlStdOperatorTable.GREATER_THAN_OR_EQUAL, arg, lower),
@@ -1811,7 +1847,7 @@ public class RexBuilder {
       return typeFactory.createSqlType(SqlTypeName.BINARY,
           ((ByteString) value).length());
     }
-    if (value instanceof Geometries.Geom) {
+    if (value instanceof Geometry) {
       return typeFactory.createSqlType(SqlTypeName.GEOMETRY);
     }
     throw new AssertionError("unknown type " + value.getClass());

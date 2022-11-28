@@ -47,6 +47,7 @@ import org.apache.calcite.sql.SqlRankFunction;
 import org.apache.calcite.sql.SqlSampleSpec;
 import org.apache.calcite.sql.SqlSessionTableFunction;
 import org.apache.calcite.sql.SqlSetOperator;
+import org.apache.calcite.sql.SqlSetSemanticsTableOperator;
 import org.apache.calcite.sql.SqlSpecialOperator;
 import org.apache.calcite.sql.SqlSyntax;
 import org.apache.calcite.sql.SqlTumbleTableFunction;
@@ -61,6 +62,8 @@ import org.apache.calcite.sql.type.InferTypes;
 import org.apache.calcite.sql.type.OperandTypes;
 import org.apache.calcite.sql.type.ReturnTypes;
 import org.apache.calcite.sql.type.SqlOperandCountRanges;
+import org.apache.calcite.sql.type.SqlReturnTypeInference;
+import org.apache.calcite.sql.type.SqlTypeFamily;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.util.ReflectiveSqlOperatorTable;
 import org.apache.calcite.sql.validate.SqlConformance;
@@ -248,7 +251,7 @@ public class SqlStdOperatorTable extends ReflectiveSqlOperatorTable {
   public static final SqlInternalOperator EXTEND = new SqlExtendOperator();
 
   /**
-   * String concatenation operator, '<code>||</code>'.
+   * String and array-to-array concatenation operator, '<code>||</code>'.
    *
    * @see SqlLibraryOperators#CONCAT_FUNCTION
    */
@@ -258,9 +261,19 @@ public class SqlStdOperatorTable extends ReflectiveSqlOperatorTable {
           SqlKind.OTHER,
           60,
           true,
-          ReturnTypes.DYADIC_STRING_SUM_PRECISION_NULLABLE,
+          ReturnTypes.ARG0.andThen((opBinding, typeToTransform) -> {
+            SqlReturnTypeInference returnType =
+                typeToTransform.getSqlTypeName().getFamily() == SqlTypeFamily.ARRAY
+                    ? ReturnTypes.LEAST_RESTRICTIVE
+                    : ReturnTypes.DYADIC_STRING_SUM_PRECISION_NULLABLE;
+
+            return requireNonNull(returnType.inferReturnType(opBinding),
+                "inferred CONCAT element type");
+          }),
           null,
-          OperandTypes.STRING_SAME_SAME);
+          OperandTypes.STRING_SAME_SAME_OR_ARRAY_SAME_SAME
+      );
+
 
   /**
    * Arithmetic division operator, '<code>/</code>'.
@@ -841,6 +854,9 @@ public class SqlStdOperatorTable extends ReflectiveSqlOperatorTable {
 
   public static final SqlPostfixOperator JSON_VALUE_EXPRESSION =
       new SqlJsonValueExpressionOperator();
+
+  public static final SqlJsonTypeOperator JSON_TYPE_OPERATOR =
+      new SqlJsonTypeOperator();
 
 
   //-------------------------------------------------------------
@@ -1952,10 +1968,12 @@ public class SqlStdOperatorTable extends ReflectiveSqlOperatorTable {
       new SqlCurrentDateFunction();
 
   /** The <code>TIMESTAMPADD</code> function. */
-  public static final SqlFunction TIMESTAMP_ADD = new SqlTimestampAddFunction();
+  public static final SqlFunction TIMESTAMP_ADD =
+      new SqlTimestampAddFunction("TIMESTAMPADD");
 
   /** The <code>TIMESTAMPDIFF</code> function. */
-  public static final SqlFunction TIMESTAMP_DIFF = new SqlTimestampDiffFunction();
+  public static final SqlFunction TIMESTAMP_DIFF =
+      new SqlTimestampDiffFunction("TIMESTAMPDIFF");
 
   /**
    * Use of the <code>IN_FENNEL</code> operator forces the argument to be
@@ -2001,7 +2019,7 @@ public class SqlStdOperatorTable extends ReflectiveSqlOperatorTable {
    * <code>EXTRACT(HOUR FROM INTERVAL '364 23:59:59')</code> returns <code>
    * 23</code>
    */
-  public static final SqlFunction EXTRACT = new SqlExtractFunction();
+  public static final SqlFunction EXTRACT = new SqlExtractFunction("EXTRACT");
 
   /**
    * The SQL <code>YEAR</code> operator. Returns the Year
@@ -2391,8 +2409,8 @@ public class SqlStdOperatorTable extends ReflectiveSqlOperatorTable {
   public static final SqlGroupedWindowFunction TUMBLE_OLD =
       new SqlGroupedWindowFunction("$TUMBLE", SqlKind.TUMBLE,
           null, ReturnTypes.ARG0, null,
-          OperandTypes.or(OperandTypes.DATETIME_INTERVAL,
-              OperandTypes.DATETIME_INTERVAL_TIME),
+          OperandTypes.DATETIME_INTERVAL
+              .or(OperandTypes.DATETIME_INTERVAL_TIME),
           SqlFunctionCategory.SYSTEM) {
         @Override public List<SqlGroupedWindowFunction> getAuxiliaryFunctions() {
           return ImmutableList.of(TUMBLE_START, TUMBLE_END);
@@ -2413,8 +2431,8 @@ public class SqlStdOperatorTable extends ReflectiveSqlOperatorTable {
   public static final SqlGroupedWindowFunction HOP_OLD =
       new SqlGroupedWindowFunction("$HOP", SqlKind.HOP, null,
           ReturnTypes.ARG0, null,
-          OperandTypes.or(OperandTypes.DATETIME_INTERVAL_INTERVAL,
-              OperandTypes.DATETIME_INTERVAL_INTERVAL_TIME),
+          OperandTypes.DATETIME_INTERVAL_INTERVAL
+              .or(OperandTypes.DATETIME_INTERVAL_INTERVAL_TIME),
           SqlFunctionCategory.SYSTEM) {
         @Override public List<SqlGroupedWindowFunction> getAuxiliaryFunctions() {
           return ImmutableList.of(HOP_START, HOP_END);
@@ -2435,8 +2453,8 @@ public class SqlStdOperatorTable extends ReflectiveSqlOperatorTable {
   public static final SqlGroupedWindowFunction SESSION_OLD =
       new SqlGroupedWindowFunction("$SESSION", SqlKind.SESSION,
           null, ReturnTypes.ARG0, null,
-          OperandTypes.or(OperandTypes.DATETIME_INTERVAL,
-              OperandTypes.DATETIME_INTERVAL_TIME),
+          OperandTypes.DATETIME_INTERVAL
+              .or(OperandTypes.DATETIME_INTERVAL_TIME),
           SqlFunctionCategory.SYSTEM) {
         @Override public List<SqlGroupedWindowFunction> getAuxiliaryFunctions() {
           return ImmutableList.of(SESSION_START, SESSION_END);
@@ -2547,6 +2565,9 @@ public class SqlStdOperatorTable extends ReflectiveSqlOperatorTable {
           writer.endList(frame);
         }
       };
+
+  /** SetSemanticsTable represents as an input table with set semantics. */
+  public static final SqlInternalOperator SET_SEMANTICS_TABLE = new SqlSetSemanticsTableOperator();
 
   //~ Methods ----------------------------------------------------------------
 

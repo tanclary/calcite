@@ -26,6 +26,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import java.util.Calendar;
 import java.util.regex.Pattern;
 
+import static java.lang.Math.floorMod;
+
 /**
  * Timestamp literal.
  *
@@ -37,6 +39,10 @@ public class TimestampString implements Comparable<TimestampString> {
       Pattern.compile("[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]"
           + " "
           + "[0-9][0-9]:[0-9][0-9]:[0-9][0-9](\\.[0-9]*[1-9])?");
+
+  /** The Unix epoch. */
+  public static final TimestampString EPOCH =
+      new TimestampString(1970, 1, 1, 0, 0, 0);
 
   final String v;
 
@@ -175,7 +181,7 @@ public class TimestampString implements Comparable<TimestampString> {
    * the epoch. */
   public static TimestampString fromMillisSinceEpoch(long millis) {
     return new TimestampString(DateTimeUtils.unixTimestampToString(millis))
-        .withMillis((int) DateTimeUtils.floorMod(millis, 1000));
+        .withMillis((int) floorMod(millis, 1000L));
   }
 
   public Calendar toCalendar() {

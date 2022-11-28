@@ -32,6 +32,8 @@ import org.apache.calcite.linq4j.function.Experimental;
 import org.apache.calcite.linq4j.function.Function1;
 import org.apache.calcite.linq4j.function.NonDeterministic;
 import org.apache.calcite.linq4j.tree.Primitive;
+import org.apache.calcite.rel.type.TimeFrame;
+import org.apache.calcite.rel.type.TimeFrameSet;
 import org.apache.calcite.runtime.FlatLists.ComparableList;
 import org.apache.calcite.sql.fun.SqlLibraryOperators;
 import org.apache.calcite.util.NumberUtil;
@@ -81,6 +83,8 @@ import java.util.regex.Pattern;
 import static org.apache.calcite.linq4j.Nullness.castNonNull;
 import static org.apache.calcite.util.Static.RESOURCE;
 
+import static java.lang.Math.floorDiv;
+import static java.lang.Math.floorMod;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
 
@@ -117,7 +121,7 @@ public class SqlFunctions {
   private static final Pattern FROM_BASE64_REGEXP = Pattern.compile("[\\t\\n\\r\\s]");
 
   private static final Function1<List<Object>, Enumerable<Object>> LIST_AS_ENUMERABLE =
-      Linq4j::asEnumerable;
+      a0 -> a0 == null ? Linq4j.emptyEnumerable() : Linq4j.asEnumerable(a0);
 
   @SuppressWarnings("unused")
   private static final Function1<Object[], Enumerable<@Nullable Object[]>> ARRAY_CARTESIAN_PRODUCT =
@@ -462,9 +466,22 @@ public class SqlFunctions {
     return s.substring(len - n);
   }
 
-  /** SQL CHR(long) function. */
-  public static String chr(long n) {
-    return String.valueOf(Character.toChars((int) n));
+  /** SQL CHAR(integer) function, as in MySQL and Spark.
+   *
+   * <p>Returns the ASCII character of {@code n} modulo 256,
+   * or null if {@code n} &lt; 0. */
+  public static @Nullable String charFromAscii(int n) {
+    if (n < 0) {
+      return null;
+    }
+    return String.valueOf(Character.toChars(n % 256));
+  }
+
+  /** SQL CHR(integer) function, as in Oracle and Postgres.
+   *
+   * <p>Returns the UTF-8 character whose code is {@code n}. */
+  public static String charFromUtf8(int n) {
+    return String.valueOf(Character.toChars(n));
   }
 
   /** SQL OCTET_LENGTH(binary) function. */
@@ -2538,6 +2555,108 @@ public class SqlFunctions {
     return (Locale) DataContext.Variable.LOCALE.get(root);
   }
 
+  /** SQL {@code DATEADD} function applied to a custom time frame.
+   *
+   * <p>Custom time frames are created as part of a {@link TimeFrameSet}.
+   * This method retrieves the session's time frame set from the
+   * {@link DataContext.Variable#TIME_FRAME_SET} variable, then looks up the
+   * time frame by name. */
+  public static int customDateAdd(DataContext root,
+      String timeFrameName, int interval, int date) {
+    final TimeFrameSet timeFrameSet =
+        requireNonNull(DataContext.Variable.TIME_FRAME_SET.get(root));
+    final TimeFrame timeFrame = timeFrameSet.get(timeFrameName);
+    return timeFrameSet.addDate(date, interval, timeFrame);
+  }
+
+  /** SQL {@code TIMESTAMPADD} function applied to a custom time frame.
+   *
+   * <p>Custom time frames are created and accessed as described in
+   * {@link #customDateAdd}. */
+  public static long customTimestampAdd(DataContext root,
+      String timeFrameName, long interval, long timestamp) {
+    final TimeFrameSet timeFrameSet =
+        requireNonNull(DataContext.Variable.TIME_FRAME_SET.get(root));
+    final TimeFrame timeFrame = timeFrameSet.get(timeFrameName);
+    return timeFrameSet.addTimestamp(timestamp, interval, timeFrame);
+  }
+
+  /** SQL {@code DATEDIFF} function applied to a custom time frame.
+   *
+   * <p>Custom time frames are created and accessed as described in
+   * {@link #customDateAdd}. */
+  public static int customDateDiff(DataContext root,
+      String timeFrameName, int date, int date2) {
+    final TimeFrameSet timeFrameSet =
+        requireNonNull(DataContext.Variable.TIME_FRAME_SET.get(root));
+    final TimeFrame timeFrame = timeFrameSet.get(timeFrameName);
+    return timeFrameSet.diffDate(date, date2, timeFrame);
+  }
+
+  /** SQL {@code TIMESTAMPDIFF} function applied to a custom time frame.
+   *
+   * <p>Custom time frames are created and accessed as described in
+   * {@link #customDateAdd}. */
+  public static long customTimestampDiff(DataContext root,
+      String timeFrameName, long timestamp, long timestamp2) {
+    final TimeFrameSet timeFrameSet =
+        requireNonNull(DataContext.Variable.TIME_FRAME_SET.get(root));
+    final TimeFrame timeFrame = timeFrameSet.get(timeFrameName);
+    return timeFrameSet.diffTimestamp(timestamp, timestamp2, timeFrame);
+  }
+
+  /** SQL {@code FLOOR} function applied to a {@code DATE} value
+   * and a custom time frame.
+   *
+   * <p>Custom time frames are created and accessed as described in
+   * {@link #customDateAdd}. */
+  public static int customDateFloor(DataContext root,
+      String timeFrameName, int date) {
+    final TimeFrameSet timeFrameSet =
+        requireNonNull(DataContext.Variable.TIME_FRAME_SET.get(root));
+    final TimeFrame timeFrame = timeFrameSet.get(timeFrameName);
+    return timeFrameSet.floorDate(date, timeFrame);
+  }
+
+  /** SQL {@code CEIL} function applied to a {@code DATE} value
+   * and a custom time frame.
+   *
+   * <p>Custom time frames are created and accessed as described in
+   * {@link #customDateAdd}. */
+  public static int customDateCeil(DataContext root,
+      String timeFrameName, int date) {
+    final TimeFrameSet timeFrameSet =
+        requireNonNull(DataContext.Variable.TIME_FRAME_SET.get(root));
+    final TimeFrame timeFrame = timeFrameSet.get(timeFrameName);
+    return timeFrameSet.ceilDate(date, timeFrame);
+  }
+
+  /** SQL {@code FLOOR} function applied to a {@code TIMESTAMP} value
+   * and a custom time frame.
+   *
+   * <p>Custom time frames are created and accessed as described in
+   * {@link #customDateAdd}. */
+  public static long customTimestampFloor(DataContext root,
+      String timeFrameName, long timestamp) {
+    final TimeFrameSet timeFrameSet =
+        requireNonNull(DataContext.Variable.TIME_FRAME_SET.get(root));
+    final TimeFrame timeFrame = timeFrameSet.get(timeFrameName);
+    return timeFrameSet.floorTimestamp(timestamp, timeFrame);
+  }
+
+  /** SQL {@code CEIL} function applied to a {@code TIMESTAMP} value
+   * and a custom time frame.
+   *
+   * <p>Custom time frames are created and accessed as described in
+   * {@link #customDateAdd}. */
+  public static long customTimestampCeil(DataContext root,
+      String timeFrameName, long timestamp) {
+    final TimeFrameSet timeFrameSet =
+        requireNonNull(DataContext.Variable.TIME_FRAME_SET.get(root));
+    final TimeFrame timeFrame = timeFrameSet.get(timeFrameName);
+    return timeFrameSet.ceilTimestamp(timestamp, timeFrame);
+  }
+
   /** SQL {@code TRANSLATE(string, search_chars, replacement_chars)}
    * function. */
   public static String translate3(String s, String search, String replacement) {
@@ -2886,8 +3005,7 @@ public class SqlFunctions {
   /** Adds a given number of months to a timestamp, represented as the number
    * of milliseconds since the epoch. */
   public static long addMonths(long timestamp, int m) {
-    final long millis =
-        DateTimeUtils.floorMod(timestamp, DateTimeUtils.MILLIS_PER_DAY);
+    final long millis = floorMod(timestamp, DateTimeUtils.MILLIS_PER_DAY);
     timestamp -= millis;
     final long x =
         addMonths((int) (timestamp / DateTimeUtils.MILLIS_PER_DAY), m);
@@ -2901,9 +3019,9 @@ public class SqlFunctions {
     int m0 = (int) DateTimeUtils.unixDateExtract(TimeUnitRange.MONTH, date);
     int d0 = (int) DateTimeUtils.unixDateExtract(TimeUnitRange.DAY, date);
     m0 += m;
-    int deltaYear = (int) DateTimeUtils.floorDiv(m0, 12);
+    int deltaYear = floorDiv(m0, 12);
     y0 += deltaYear;
-    m0 = (int) DateTimeUtils.floorMod(m0, 12);
+    m0 = floorMod(m0, 12);
     if (m0 == 0) {
       y0 -= 1;
       m0 += 12;
@@ -2956,14 +3074,10 @@ public class SqlFunctions {
   }
 
   public static int subtractMonths(long t0, long t1) {
-    final long millis0 =
-        DateTimeUtils.floorMod(t0, DateTimeUtils.MILLIS_PER_DAY);
-    final int d0 = (int) DateTimeUtils.floorDiv(t0 - millis0,
-        DateTimeUtils.MILLIS_PER_DAY);
-    final long millis1 =
-        DateTimeUtils.floorMod(t1, DateTimeUtils.MILLIS_PER_DAY);
-    final int d1 = (int) DateTimeUtils.floorDiv(t1 - millis1,
-        DateTimeUtils.MILLIS_PER_DAY);
+    final long millis0 = floorMod(t0, DateTimeUtils.MILLIS_PER_DAY);
+    final int d0 = (int) floorDiv(t0 - millis0, DateTimeUtils.MILLIS_PER_DAY);
+    final long millis1 = floorMod(t1, DateTimeUtils.MILLIS_PER_DAY);
+    final int d1 = (int) floorDiv(t1 - millis1, DateTimeUtils.MILLIS_PER_DAY);
     int x = subtractMonths(d0, d1);
     final long d2 = addMonths(d1, x);
     if (d2 == d0 && millis0 < millis1) {

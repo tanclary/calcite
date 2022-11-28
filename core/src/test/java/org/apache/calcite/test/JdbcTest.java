@@ -1770,7 +1770,6 @@ public class JdbcTest {
   /** Test case for
    * <a href="https://issues.apache.org/jira/browse/CALCITE-35">[CALCITE-35]
    * Support parenthesized sub-clause in JOIN</a>. */
-  @Disabled
   @Test void testJoinJoin() {
     CalciteAssert.that()
         .with(CalciteAssert.Config.FOODMART_CLONE)
@@ -1795,24 +1794,22 @@ public class JdbcTest {
             + " or \"promotion\".\"media_type\" = 'Sunday Paper'\n"
             + " or \"promotion\".\"media_type\" = 'Street Handout')\n"
             + " and (\"product_class\".\"product_family\" = 'Drink')\n"
-            + " and (\"customer\".\"country\" = 'USA' and \"customer\".\"state_province\""
-            + " = 'WA' and \"customer\".\"city\" = 'Bellingham')\n"
+            + " and (\"customer\".\"country\" = 'USA'\n"
+            + "   and \"customer\".\"state_province\" = 'WA'\n"
+            + "   and \"customer\".\"city\" = 'Bellingham')\n"
             + "group by \"product_class\".\"product_family\",\n"
             + "   \"product_class\".\"product_department\",\n"
             + "   \"customer\".\"country\",\n"
             + "   \"customer\".\"state_province\",\n"
             + "   \"customer\".\"city\"\n"
-            + "order by ISNULL(\"product_class\".\"product_family\") ASC,   \"product_class\".\"product_family\" ASC,\n"
-            + "   ISNULL(\"product_class\".\"product_department\") ASC,   \"product_class\".\"product_department\" ASC,\n"
-            + "   ISNULL(\"customer\".\"country\") ASC,   \"customer\".\"country\" ASC,\n"
-            + "   ISNULL(\"customer\".\"state_province\") ASC,   \"customer\".\"state_province\" ASC,\n"
-            + "   ISNULL(\"customer\".\"city\") ASC,   \"customer\".\"city\" ASC")
-        .returns("+-------+---------------------+-----+------+------------+\n"
-            + "| c0    | c1                  | c2  | c3   | c4         |\n"
-            + "+-------+---------------------+-----+------+------------+\n"
-            + "| Drink | Alcoholic Beverages | USA | WA   | Bellingham |\n"
-            + "| Drink | Dairy               | USA | WA   | Bellingham |\n"
-            + "+-------+---------------------+-----+------+------------+");
+            + "order by \"product_class\".\"product_family\" asc nulls first,\n"
+            + "   \"product_class\".\"product_department\" asc nulls first,\n"
+            + "   \"customer\".\"country\" asc nulls first,\n"
+            + "   \"customer\".\"state_province\" asc nulls first,\n"
+            + "   \"customer\".\"city\" asc nulls first")
+        .returnsUnordered(
+            "c0=Drink; c1=Alcoholic Beverages; c2=USA; c3=WA; c4=Bellingham",
+            "c0=Drink; c1=Dairy; c2=USA; c3=WA; c4=Bellingham");
   }
 
   /** Four-way join. Used to take 80 seconds. */
@@ -2115,7 +2112,7 @@ public class JdbcTest {
         .query("select multiset(\n"
             + "  select \"deptno\" from \"hr\".\"emps\") as a\n"
             + "from (values (1))")
-        .returnsUnordered("A=[{10}, {20}, {10}, {10}]");
+        .returnsUnordered("A=[10, 20, 10, 10]");
   }
 
   @Test void testUnnestArray() {
@@ -5430,6 +5427,30 @@ public class JdbcTest {
         });
   }
 
+  /**
+   * Test case for <a href="https://issues.apache.org/jira/browse/CALCITE-5048">[CALCITE-5048]
+   * Query with parameterized LIMIT and correlated sub-query throws AssertionError "not a
+   * literal"</a>.
+   */
+  @Disabled("[CALCITE-5229] JdbcTest#testDynamicParameterInLimitOffset"
+      + " throws IllegalArgumentException")
+  @Test void testDynamicParameterInLimitOffset() {
+    CalciteAssert.hr()
+        .query("SELECT * FROM \"hr\".\"emps\" AS a "
+            + "WHERE \"deptno\" = "
+            + "(SELECT MAX(\"deptno\") "
+            + "FROM \"hr\".\"emps\" AS b "
+            + "WHERE a.\"empid\" = b.\"empid\""
+            + ") ORDER BY \"salary\" LIMIT ? OFFSET ?")
+        .explainContains("EnumerableLimit(offset=[?1], fetch=[?0])")
+        .consumesPreparedStatement(p -> {
+          p.setInt(1, 2);
+          p.setInt(2, 1);
+        })
+        .returns("empid=200; deptno=20; name=Eric; salary=8000.0; commission=500\n"
+            + "empid=100; deptno=10; name=Bill; salary=10000.0; commission=1000\n");
+  }
+
   /** Tests a JDBC connection that provides a model (a single schema based on
    * a JDBC database). */
   @Test void testModel() {
@@ -6821,17 +6842,17 @@ public class JdbcTest {
             DatabaseMetaData metaData = connection.getMetaData();
             assertThat(metaData.getIdentifierQuoteString(), equalTo("`"));
             assertThat(metaData.supportsMixedCaseIdentifiers(),
-                equalTo(true));
-            assertThat(metaData.storesMixedCaseIdentifiers(),
                 equalTo(false));
+            assertThat(metaData.storesMixedCaseIdentifiers(),
+                equalTo(true));
             assertThat(metaData.storesUpperCaseIdentifiers(),
                 equalTo(false));
             assertThat(metaData.storesLowerCaseIdentifiers(),
                 equalTo(false));
             assertThat(metaData.supportsMixedCaseQuotedIdentifiers(),
-                equalTo(true));
-            assertThat(metaData.storesMixedCaseQuotedIdentifiers(),
                 equalTo(false));
+            assertThat(metaData.storesMixedCaseQuotedIdentifiers(),
+                equalTo(true));
             assertThat(metaData.storesUpperCaseIdentifiers(),
                 equalTo(false));
             assertThat(metaData.storesLowerCaseQuotedIdentifiers(),
@@ -6956,12 +6977,12 @@ public class JdbcTest {
    * Enable spatial operator table by adding 'fun=spatial'to JDBC URL</a>. */
   @Test void testFunSpatial() {
     final String sql = "select distinct\n"
-        + "  ST_PointFromText('POINT(-71.0642.28)') as c\n"
+        + "  ST_PointFromText('POINT(-71.0642 .28)') as c\n"
         + "from \"hr\".\"emps\"";
     CalciteAssert.that(CalciteAssert.Config.REGULAR)
         .with(CalciteConnectionProperty.FUN, "spatial")
         .query(sql)
-        .returnsUnordered("C={\"x\":-71.0642,\"y\":0.28}");
+        .returnsUnordered("C=POINT (-71.0642 0.28)");
 
     // NVL is present in the Oracle operator table, but not spatial or core
     CalciteAssert.that(CalciteAssert.Config.REGULAR)
@@ -7243,8 +7264,8 @@ public class JdbcTest {
     }
 
     // add tables and retrieve with various case sensitivities
-    final TableInRootSchemaTest.SimpleTable table =
-        new TableInRootSchemaTest.SimpleTable();
+    final Smalls.SimpleTable table =
+        new Smalls.SimpleTable();
     a2Schema.add("table1", table);
     a2Schema.add("TABLE1", table);
     a2Schema.add("tabLe1", table);
@@ -7712,9 +7733,9 @@ public class JdbcTest {
         .planContains("static final java.math.BigDecimal $L4J$C$new_java_math_BigDecimal_1_ = "
             + "new java.math.BigDecimal(\n"
             + "              1)")
-        .planContains("org.apache.calcite.runtime.GeoFunctions.ST_MakePoint("
+        .planContains("org.apache.calcite.runtime.SpatialTypeFunctions.ST_MakePoint("
             + "$L4J$C$new_java_math_BigDecimal_1_, literal_value0)")
-        .returns("EXPR$0={\"x\":1,\"y\":2.1}\n");
+        .returns("EXPR$0=POINT (1 2.1)\n");
   }
 
   @Test void testMatchSimple() {
@@ -7727,14 +7748,13 @@ public class JdbcTest {
         + "  pattern (up s)\n"
         + "  define up as up.\"empid\" = 100)";
     final String convert = ""
-        + "LogicalProject(C=[$0], EMPID=[$1], TWO=[$2])\n"
-        + "  LogicalMatch(partition=[[]], order=[[0 DESC]], "
+        + "LogicalMatch(partition=[[]], order=[[0 DESC]], "
         + "outputFields=[[C, EMPID, TWO]], allRows=[false], "
         + "after=[FLAG(SKIP TO NEXT ROW)], pattern=[('UP', 'S')], "
         + "isStrictStarts=[false], isStrictEnds=[false], subsets=[[]], "
         + "patternDefinitions=[[=(CAST(PREV(UP.$0, 0)):INTEGER NOT NULL, 100)]], "
         + "inputFields=[[empid, deptno, name, salary, commission]])\n"
-        + "    LogicalTableScan(table=[[hr, emps]])\n";
+        + "  LogicalTableScan(table=[[hr, emps]])\n";
     final String plan = "PLAN="
         + "EnumerableMatch(partition=[[]], order=[[0 DESC]], "
         + "outputFields=[[C, EMPID, TWO]], allRows=[false], "
@@ -7760,14 +7780,13 @@ public class JdbcTest {
         + "  pattern (s up)\n"
         + "  define up as up.\"commission\" < prev(up.\"commission\"))";
     final String convert = ""
-        + "LogicalProject(C=[$0], EMPID=[$1])\n"
-        + "  LogicalMatch(partition=[[]], order=[[0 DESC]], "
+        + "LogicalMatch(partition=[[]], order=[[0 DESC]], "
         + "outputFields=[[C, EMPID]], allRows=[false], "
         + "after=[FLAG(SKIP TO NEXT ROW)], pattern=[('S', 'UP')], "
         + "isStrictStarts=[false], isStrictEnds=[false], subsets=[[]], "
         + "patternDefinitions=[[<(PREV(UP.$4, 0), PREV(UP.$4, 1))]], "
         + "inputFields=[[empid, deptno, name, salary, commission]])\n"
-        + "    LogicalTableScan(table=[[hr, emps]])\n";
+        + "  LogicalTableScan(table=[[hr, emps]])\n";
     final String plan = "PLAN="
         + "EnumerableMatch(partition=[[]], order=[[0 DESC]], "
         + "outputFields=[[C, EMPID]], allRows=[false], "
