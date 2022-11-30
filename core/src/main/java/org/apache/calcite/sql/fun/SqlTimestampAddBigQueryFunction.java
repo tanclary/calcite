@@ -20,16 +20,20 @@ import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.sql.SqlCall;
+import org.apache.calcite.sql.SqlCallBinding;
 import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlFunctionCategory;
+import org.apache.calcite.sql.SqlIntervalLiteral;
 import org.apache.calcite.sql.SqlIntervalQualifier;
 import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.SqlNumericLiteral;
 import org.apache.calcite.sql.type.OperandTypes;
 import org.apache.calcite.sql.type.SqlReturnTypeInference;
 import org.apache.calcite.sql.type.SqlTypeFamily;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqlValidatorScope;
+import org.apache.calcite.sql.SqlBasicCall;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -61,22 +65,27 @@ import static org.apache.calcite.util.Util.first;
  *
  * <p>Returns modified datetime.
  */
-public class SqlTimestampAddFunction extends SqlFunction {
+public class SqlTimestampAddBigQueryFunction extends SqlFunction {
 
   private static final int MILLISECOND_PRECISION = 3;
   private static final int MICROSECOND_PRECISION = 6;
 
   private static final SqlReturnTypeInference RETURN_TYPE_INFERENCE =
       opBinding -> {
-          System.out.println("");
-          return deduceType(opBinding.getTypeFactory(),
-            opBinding.getOperandLiteralValue(0, TimeUnit.class),
-            opBinding.getOperandType(1), opBinding.getOperandType(2));
+        SqlCallBinding callBinding = (SqlCallBinding) opBinding;
+        SqlCall call = callBinding.getCall();
+        SqlBasicCall operandCall = call.operand(1);
+
+        SqlIntervalQualifier qualifier = operandCall.operand(1);
+        TimeUnit unit = qualifier.timeUnitRange.startUnit;
+        return deduceType(opBinding.getTypeFactory(), unit, opBinding.getOperandType(1),
+          opBinding.getOperandType(0));
       };
+
 
   public static RelDataType deduceType(RelDataTypeFactory typeFactory,
       @Nullable TimeUnit timeUnit, RelDataType operandType1,
-      RelDataType operandType2) {
+      RelDataType timestamp) {
     final RelDataType type;
     TimeUnit timeUnit2 = first(timeUnit, TimeUnit.EPOCH);
     switch (timeUnit2) {
@@ -95,44 +104,30 @@ public class SqlTimestampAddFunction extends SqlFunction {
             MICROSECOND_PRECISION);
         break;
       default:
-        if (operandType2.getSqlTypeName() == SqlTypeName.TIME) {
-          type = typeFactory.createSqlType(SqlTypeName.TIME);
-        } else {
           type = typeFactory.createSqlType(SqlTypeName.TIMESTAMP);
-        }
       }
       break;
     default:
     case EPOCH:
-      type = operandType2;
+      type = timestamp;
     }
     return typeFactory.createTypeWithNullability(type,
         operandType1.isNullable()
-            || operandType2.isNullable());
+        || timestamp.isNullable());
   }
 
   @Override public void validateCall(SqlCall call, SqlValidator validator,
       SqlValidatorScope scope, SqlValidatorScope operandScope) {
     super.validateCall(call, validator, scope, operandScope);
 
-    // This is either a time unit or a time frame:
-    //
-    //  * In "TIMESTAMPADD(YEAR, 2, x)" operand 0 is a SqlIntervalQualifier
-    //    with startUnit = YEAR and timeFrameName = null.
-    //
-    //  * In "TIMESTAMPADD(MINUTE15, 2, x) operand 0 is a SqlIntervalQualifier
-    //    with startUnit = EPOCH and timeFrameName = 'MINUTE15'.
-    //
-    // If the latter, check that timeFrameName is valid.
-    validator.validateTimeFrame(
-        (SqlIntervalQualifier) call.getOperandList().get(0));
+    SqlBasicCall opCall = call.operand(1);
+    SqlIntervalQualifier qualifier = opCall.operand(1);
+    validator.validateTimeFrame(qualifier);
   }
 
-  /** Creates a SqlTimestampAddFunction. */
-  SqlTimestampAddFunction(String name) {
+  /** Creates a SqlTimestampAddBigQueryFunction. */
+  SqlTimestampAddBigQueryFunction(String name) {
     super(name, SqlKind.TIMESTAMP_ADD, RETURN_TYPE_INFERENCE, null,
-        OperandTypes.family(SqlTypeFamily.ANY, SqlTypeFamily.INTEGER,
-            SqlTypeFamily.DATETIME),
-        SqlFunctionCategory.TIMEDATE);
+        OperandTypes.TIMESTAMP_INTERVAL, SqlFunctionCategory.TIMEDATE);
   }
 }

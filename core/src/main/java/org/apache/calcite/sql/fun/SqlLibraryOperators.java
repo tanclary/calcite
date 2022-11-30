@@ -687,24 +687,13 @@ public abstract class SqlLibraryOperators {
               OperandTypes.TIMESTAMP, OperandTypes.interval(TIMESTAMP_UNITS)),
           SqlFunctionCategory.TIMEDATE);
 
+  /** The "TIMESTAMP_ADD(timestamp_expression, INTERVAL int64_expression date_part)"
+   * function (BigQuery); Adds int64_expression units of date_part to the timestamp,
+   * independent of any time zone.*/
   @LibraryOperator(libraries = {BIG_QUERY})
   public static final SqlFunction TIMESTAMP_ADD_BIG_QUERY =
-      new SqlFunction("TIMESTAMP_ADD",
-          SqlKind.TIMESTAMP_ADD,
-          ReturnTypes.TIMESTAMP_NULLABLE,
-          null,
-          OperandTypes.TIMESTAMP_INTERVAL,
-          SqlFunctionCategory.TIMEDATE);
-/*
-  @LibraryOperator(libraries = {BIG_QUERY})
-  public static final SqlFunction TIMESTAMP_DIFF_BIG_QUERY =
-      new SqlFunction("TIMESTAMP_DIFF",
-          SqlKind.TIMESTAMP_DIFF,
-          ReturnTypes.BIGINT_NULLABLE,
-          null,
-          OperandTypes.TIMESTAMP_INTERVAL,
-          SqlFunctionCategory.TIMEDATE);
-*/
+      new SqlTimestampAddBigQueryFunction("TIMESTAMP_ADD");
+
   /** The "TIMESTAMP_SECONDS(bigint)" function; returns a TIMESTAMP value
    * a given number of seconds after 1970-01-01 00:00:00. */
   @LibraryOperator(libraries = {BIG_QUERY})

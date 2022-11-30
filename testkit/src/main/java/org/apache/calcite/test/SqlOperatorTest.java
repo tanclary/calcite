@@ -7642,126 +7642,37 @@ public class SqlOperatorTest {
   }
 
   @Test void testBigQueryTimestampAdd() {
+    final SqlOperatorFixture nonBigQuery = fixture()
+        .setFor(SqlLibraryOperators.TIMESTAMP_ADD_BIG_QUERY);
+    nonBigQuery.checkFails("^timestamp_add(timestamp '2008-12-25 15:30:00', "
+            + "interval 5 minute)^",
+        "No match found for function signature "
+            + "TIMESTAMP_ADD\\(<TIMESTAMP>, <INTERVAL_DAY_TIME>\\)", false);
+
     final SqlOperatorFixture f = fixture()
         .withLibrary(SqlLibrary.BIG_QUERY)
         .setFor(SqlLibraryOperators.TIMESTAMP_ADD_BIG_QUERY);
+    f.checkScalar("timestamp_add(timestamp '2008-12-25 15:30:00', "
+            + "interval 5000000000 nanosecond)",
+        "2008-12-25 15:30:05",
+        "TIMESTAMP(0) NOT NULL");
+    f.checkScalar("timestamp_add(timestamp '2008-12-25 15:30:00', interval 100000000000 microsecond)",
+        "2008-12-26 19:16:40",
+        "TIMESTAMP(3) NOT NULL");
+    f.checkScalar("timestamp_add(timestamp '2008-12-25 15:30:00', interval 100000000 millisecond)",
+        "2008-12-26 19:16:40",
+        "TIMESTAMP(3) NOT NULL");
+    f.checkScalar("timestamp_add(timestamp '2016-02-24 12:42:25', interval 2 second)",
+        "2016-02-24 12:42:27",
+        "TIMESTAMP(0) NOT NULL");
+    f.checkScalar("timestamp_add(timestamp '2016-02-24 12:42:25', interval 2 minute)",
+        "2016-02-24 12:44:25",
+        "TIMESTAMP(0) NOT NULL");
+    f.checkScalar("timestamp_add(timestamp '2016-02-24 12:42:25', interval -2000 hour)",
+        "2015-12-03 04:42:25",
+        "TIMESTAMP(0) NOT NULL");
+    f.checkNull("timestamp_add(CAST(NULL AS TIMESTAMP), interval 5 minute)");
 
-    SECOND_VARIANTS.forEach(s ->
-        f.checkScalar("timestamp_add(timestamp '2016-02-24 12:42:25', interval 2 " + s + ")",
-            "2016-02-24 12:42:27",
-            "TIMESTAMP(0) NOT NULL"));
-    MINUTE_VARIANTS.forEach(s ->
-        f.checkScalar("timestamp_add(timestamp '2016-02-24 12:42:25', interval 2"
-                + s + ")",
-            "2016-02-24 12:44:25",
-            "TIMESTAMP(0) NOT NULL"));
-    HOUR_VARIANTS.forEach(s ->
-        f.checkScalar("timestamp_add(timestamp '2016-02-24 12:42:25', interval -2000"
-                + s + ")",
-            "2015-12-03 04:42:25",
-            "TIMESTAMP(0) NOT NULL"));
-    HOUR_VARIANTS.forEach(s ->
-        f.checkNull("timestamp_add(timestamp '2016-02-24 12:42:25', interval CAST(NULL AS      INTEGER)" + s + ")"));
-    HOUR_VARIANTS.forEach(s ->
-        f.checkNull("timestamp_add(CAST(NULL AS TIMESTAMP), interval -200" + s + ")"));
-    MONTH_VARIANTS.forEach(s ->
-        f.checkScalar("timestamp_add(timestamp '2016-02-24 12:42:25', interval 3"
-                + s + ")",
-            "2016-05-24 12:42:25", "TIMESTAMP(0) NOT NULL"));
-    MONTH_VARIANTS.forEach(s ->
-        f.checkScalar("timestamp_add(cast(null as timestamp), interval 3" + s + ")",
-            isNullValue(), "TIMESTAMP(0)"));
-
-    // timestamp_add with DATE; returns a TIMESTAMP value for sub-day intervals.
-    MONTH_VARIANTS.forEach(s ->
-        f.checkScalar("timestamp_add(date '2016-06-15' interval 1" + s + ")",
-            "2016-07-15", "DATE NOT NULL"));
-    DAY_VARIANTS.forEach(s ->
-        f.checkScalar("timestamp_add(date '2016-06-15', interval 1" + s + ")",
-            "2016-06-16", "DATE NOT NULL"));
-    HOUR_VARIANTS.forEach(s ->
-        f.checkScalar("timestamp_add(date '2016-06-15', interval -1" + s + ")",
-            "2016-06-14 23:00:00", "TIMESTAMP(0) NOT NULL"));
-    MINUTE_VARIANTS.forEach(s ->
-        f.checkScalar("timestamp_add(date '2016-06-15', interval 1" + s + ")",
-            "2016-06-15 00:01:00", "TIMESTAMP(0) NOT NULL"));
-    SECOND_VARIANTS.forEach(s ->
-        f.checkScalar("timestamp_add(date '2016-06-15', interval -1" + s + ")",
-            "2016-06-14 23:59:59", "TIMESTAMP(0) NOT NULL"));
-    SECOND_VARIANTS.forEach(s ->
-        f.checkScalar("timestamp_add(date '2016-06-15', interval 1" + s + ")",
-            "2016-06-15 00:00:01", "TIMESTAMP(0) NOT NULL"));
-    SECOND_VARIANTS.forEach(s ->
-        f.checkScalar("timestamp_add(cast(null as date), interval 1" + s + ")",
-            isNullValue(), "TIMESTAMP(0)"));
-    DAY_VARIANTS.forEach(s ->
-        f.checkScalar("timestamp_add(cast(null as date), interval 1" + s + ")",
-            isNullValue(), "DATE"));
-
-    // Round to the last day of previous month
-    MONTH_VARIANTS.forEach(s ->
-        f.checkScalar("timestamp_add(date '2016-05-31, interval 1" + s + "')",
-            "2016-06-30", "DATE NOT NULL"));
-    MONTH_VARIANTS.forEach(s ->
-        f.checkScalar("timestamp_add(date '2016-01-31', interval 5" + s + ")",
-            "2016-06-30", "DATE NOT NULL"));
-    MONTH_VARIANTS.forEach(s ->
-        f.checkScalar("timestamp_add(date '2016-03-31', interval -1" + s + ")",
-            "2016-02-29", "DATE NOT NULL"));
-
-    // timestamp_add with time; returns a time value.The interval is positive.
-    SECOND_VARIANTS.forEach(s ->
-        f.checkScalar("timestamp_add(time '23:59:59', interval 1" + s + ")",
-            "00:00:00", "TIME(0) NOT NULL"));
-    MINUTE_VARIANTS.forEach(s ->
-        f.checkScalar("timestamp_add(time '00:00:00', interval 1" + s + ")",
-            "00:01:00", "TIME(0) NOT NULL"));
-    MINUTE_VARIANTS.forEach(s ->
-        f.checkScalar("timestamp_add(time '23:59:59', interval 1" + s + ")",
-            "00:00:59", "TIME(0) NOT NULL"));
-    HOUR_VARIANTS.forEach(s ->
-        f.checkScalar("timestamp_add(time '23:59:59', interval 1" + s + ")",
-            "00:59:59", "TIME(0) NOT NULL"));
-    DAY_VARIANTS.forEach(s ->
-        f.checkScalar("timestamp_add(time '23:59:59', interval 15" + s + ")",
-            "23:59:59", "TIME(0) NOT NULL"));
-    WEEK_VARIANTS.forEach(s ->
-        f.checkScalar("timestamp_add(time '23:59:59', interval 3" + s + ")",
-            "23:59:59", "TIME(0) NOT NULL"));
-    MONTH_VARIANTS.forEach(s ->
-        f.checkScalar("timestamp_add(time '23:59:59', interval 6" + s + ")",
-            "23:59:59", "TIME(0) NOT NULL"));
-    QUARTER_VARIANTS.forEach(s ->
-        f.checkScalar("timestamp_add(time '23:59:59', interval 1" + s + ")",
-            "23:59:59", "TIME(0) NOT NULL"));
-    YEAR_VARIANTS.forEach(s ->
-        f.checkScalar("timestamp_add(time '23:59:59, interval 10" + s + "')",
-            "23:59:59", "TIME(0) NOT NULL"));
-    // timestamp_add with time; returns a time value .The interval is negative.
-    SECOND_VARIANTS.forEach(s ->
-        f.checkScalar("timestamp_add(time '00:00:00', interval -1" + s + ")",
-            "23:59:59", "TIME(0) NOT NULL"));
-    MINUTE_VARIANTS.forEach(s ->
-        f.checkScalar("timestamp_add(time '00:00:00', interval -1" + s + ")",
-            "23:59:00", "TIME(0) NOT NULL"));
-    HOUR_VARIANTS.forEach(s ->
-        f.checkScalar("timestamp_add(time '00:00:00', interval -1" + s + ")",
-            "23:00:00", "TIME(0) NOT NULL"));
-    DAY_VARIANTS.forEach(s ->
-        f.checkScalar("timestamp_add( time '23:59:59', interval -1" + s + ")",
-            "23:59:59", "TIME(0) NOT NULL"));
-    WEEK_VARIANTS.forEach(s ->
-        f.checkScalar("timestamp_add(time '23:59:59', interval -1" + s + ")",
-            "23:59:59", "TIME(0) NOT NULL"));
-    MONTH_VARIANTS.forEach(s ->
-        f.checkScalar("timestamp_add(time '23:59:59', interval -1" + s + ")",
-            "23:59:59", "TIME(0) NOT NULL"));
-    QUARTER_VARIANTS.forEach(s ->
-        f.checkScalar("timestamp_add(time '23:59:59', interval -1" + s + ")",
-            "23:59:59", "TIME(0) NOT NULL"));
-    YEAR_VARIANTS.forEach(s ->
-        f.checkScalar("timestamp_add(time '23:59:59', interval -1" + s + ")",
-            "23:59:59", "TIME(0) NOT NULL"));
 
 
   }

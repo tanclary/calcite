@@ -4779,7 +4779,7 @@ SqlNode IntervalLiteralOrExpression() :
         |
             e = CompoundIdentifier()
         )
-        intervalQualifier = IntervalQualifierStart() {
+        intervalQualifier = TimeUnitOrName() {
             if (sign == -1) {
                 e = SqlStdOperatorTable.UNARY_MINUS.createCall(e.getParserPosition(), e);
             }
@@ -5983,8 +5983,6 @@ SqlNode BuiltinFunctionCall() :
     |
         node = TimestampAddFunctionCall() { return node; }
     |
-        node = TimestampAddBigQueryFunctionCall() { return node; }
-    |
         node = TimestampDiffFunctionCall() { return node; }
     |
         node = TimestampTruncFunctionCall() { return node; }
@@ -6510,36 +6508,6 @@ SqlCall TimestampAddFunctionCall() :
         return SqlStdOperatorTable.TIMESTAMP_ADD.createCall(
             s.end(this), args);
     }
-}
-
-/**
- * Parses a call to Big Query's TIMESTAMP_ADD.
- */
-SqlCall TimestampAddBigQueryFunctionCall() :
-{
-    final List<SqlNode> args = new ArrayList<SqlNode>();
-    final Span s;
-    SqlNode e;
-    SqlNode opCall;
-    final SqlIntervalQualifier intervalQualifier;
-}
-{
-    <TIMESTAMP_ADD> { s = span(); }
-    <LPAREN>
-    AddExpression(args, ExprContext.ACCEPT_SUB_QUERY)
-    <COMMA>
-    <INTERVAL>
-    e = UnsignedNumericLiteral()
-    intervalQualifier = TimeUnitOrName()
-    { args.add(SqlStdOperatorTable.INTERVAL.createCall(s.end(this), e,
-                                                                   intervalQualifier));}
-
-    <RPAREN> {
-      return SqlLibraryOperators.TIMESTAMP_ADD_BIG_QUERY
-        .createCall(s.end(this), args);
-    }
-
-
 }
 
 /**
@@ -7094,12 +7062,6 @@ SqlNode JdbcFunctionCall() :
     (
         LOOKAHEAD(1)
         call = TimestampAddFunctionCall() {
-            name = call.getOperator().getName();
-            args = new SqlNodeList(call.getOperandList(), getPos());
-        }
-    |
-        LOOKAHEAD(1)
-        call = TimestampAddBigQueryFunctionCall() {
             name = call.getOperator().getName();
             args = new SqlNodeList(call.getOperandList(), getPos());
         }
@@ -7959,7 +7921,6 @@ SqlPostfixOperator PostfixRowOperator() :
 |   < TIME_TRUNC: "TIME_TRUNC" >
 |   < TIMESTAMP: "TIMESTAMP" >
 |   < TIMESTAMPADD: "TIMESTAMPADD" >
-|   < TIMESTAMP_ADD: "TIMESTAMP_ADD" >
 |   < TIMESTAMPDIFF: "TIMESTAMPDIFF" >
 |   < TIMESTAMP_TRUNC: "TIMESTAMP_TRUNC" >
 |   < TIMEZONE_HOUR: "TIMEZONE_HOUR" >
