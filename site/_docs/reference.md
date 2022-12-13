@@ -2658,6 +2658,7 @@ semantics.
 | b m o p | SUBSTR(string, position [, substringLength ]) | Returns a portion of *string*, beginning at character *position*, *substringLength* characters long. SUBSTR calculates lengths using characters as defined by the input character set
 | b o | TANH(numeric)                                | Returns the hyperbolic tangent of *numeric*
 | b | TIMESTAMP_ADD(timestamp, interval int64 date_part) | Adds int64_expression units of date_part to the timestamp, independent of any time zone.
+| b | TIME_ADD(time, interval int64 date_part)       | Adds int64_expression units of date to the time, independent of any time zone.
 | b | TIMESTAMP_MICROS(integer)                      | Returns the TIMESTAMP that is *integer* microseconds after 1970-01-01 00:00:00
 | b | TIMESTAMP_MILLIS(integer)                      | Returns the TIMESTAMP that is *integer* milliseconds after 1970-01-01 00:00:00
 | b | TIMESTAMP_SECONDS(integer)                     | Returns the TIMESTAMP that is *integer* seconds after 1970-01-01 00:00:00
