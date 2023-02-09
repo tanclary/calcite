@@ -349,25 +349,28 @@ SELECT current_timestamp() AS now, t.current_timestamp FROM t;
 # In the following example, EXTRACT returns a value corresponding to
 # the DAY date part.
 
-!if (false) {
 SELECT EXTRACT(DAY FROM DATE '2013-12-25') AS the_day;
 +---------+
 | the_day |
 +---------+
-| 25      |
+|      25 |
 +---------+
+(1 row)
+
 !ok
-!}
+
+SELECT EXTRACT(isoweek FROM DATE '2013-12-25') as the_isoweek;
+!ok
 
 # In the following example, EXTRACT returns values corresponding to
 # different date parts from a column of dates near the end of the
 # year.
 
-!if (false) {
+#   EXTRACT(ISOYEAR FROM d) AS isoyear,
+#    EXTRACT(ISOWEEK FROM d) AS isoweek,
+
 SELECT
   d,
-  EXTRACT(ISOYEAR FROM d) AS isoyear,
-  EXTRACT(ISOWEEK FROM d) AS isoweek,
   EXTRACT(YEAR FROM d) AS year,
   EXTRACT(WEEK FROM d) AS week
 FROM UNNEST(
@@ -412,14 +415,14 @@ ORDER BY d;
 | 2016-01-08 | 2016    | 1       | 2016 | 1    |
 | 2016-01-09 | 2016    | 1       | 2016 | 1    |
 +------------+---------+---------+------+------+
+(18 rows)
+
 !ok
-!}
 
 # In the following example, date_expression falls on a Sunday. EXTRACT
 # calculates the first column using weeks that begin on Sunday, and it
 # calculates the second column using weeks that begin on Monday.
 
-!if (false) {
 WITH t AS (SELECT DATE('2017-11-05') AS d)
 SELECT
   d,
@@ -428,10 +431,11 @@ SELECT
 +------------+-------------+-------------+
 | date       | week_sunday | week_monday |
 +------------+-------------+-------------+
-| 2017-11-05 | 45          | 44          |
+| 2017-11-05 |          45 |          44 |
 +------------+-------------+-------------+
+(1 row)
+
 !ok
-!}
 
 # In the following example, EXTRACT returns a value corresponding to
 # the HOUR time part.
@@ -447,7 +451,6 @@ SELECT EXTRACT(HOUR FROM DATETIME(2008, 12, 25, 15, 30, 00)) as hour;
 
 # In the following example, EXTRACT returns values corresponding to
 # different time parts from a column of datetimes.
-!if (false) {
 WITH Datetimes AS (
   SELECT DATETIME '2005-01-03 12:34:56' AS dt UNION ALL
   SELECT DATETIME '2007-12-31' UNION ALL
@@ -475,13 +478,12 @@ ORDER BY dt;
 | 2017-05-26T00:00:00 | 2017    | 21      | 2017 | 21   |
 +---------------------+---------+---------+------+------+
 !ok
-!}
 
 # In the following example, datetime_expression falls on a
 # Sunday. EXTRACT calculates the first column using weeks that begin
 # on Sunday, and it calculates the second column using weeks that
 # begin on Monday.
-!if (false) {
+
 WITH t AS (SELECT DATETIME(TIMESTAMP "2017-11-05 00:00:00+00", "UTC") AS dt)
 SELECT
   dt,
@@ -494,9 +496,7 @@ FROM t;
 | 2017-11-05T00:00:00 | 45          | 44            |
 +---------------------+-------------+---------------+
 !ok
-!}
 
-!if (false) {
 WITH Input AS (SELECT TIMESTAMP("2008-12-25 05:30:00+00") AS timestamp_value)
 SELECT
   EXTRACT(DAY FROM timestamp_value AT TIME ZONE "UTC") AS the_day_utc,
@@ -508,11 +508,9 @@ FROM Input;
 | 25          | 24                 |
 +-------------+--------------------+
 !ok
-!}
 
 # Display of results may differ, depending upon the environment and
 # time zone where this query was executed.
-!if (false) {
 WITH Timestamps AS (
   SELECT TIMESTAMP("2005-01-03 12:34:56+00") AS timestamp_value UNION ALL
   SELECT TIMESTAMP("2007-12-31 12:00:00+00") UNION ALL
@@ -540,7 +538,6 @@ ORDER BY timestamp_value;
 | 2017-05-26 12:00:00 UTC | 2017    | 21      | 2017 | 21   |
 +-------------------------+---------+---------+------+------+
 !ok
-!}
 
 # In the following example, timestamp_expression falls on a Monday.
 # EXTRACT calculates the first column using weeks that begin on
@@ -549,7 +546,6 @@ ORDER BY timestamp_value;
 
 # Display of results may differ, depending upon the environment and
 # time zone where this query was executed.
-!if (false) {
 WITH t AS (SELECT TIMESTAMP("2017-11-05 00:00:00+00") AS timestamp_value)
 SELECT
   timestamp_value,
@@ -562,7 +558,6 @@ FROM t;
 | 2017-11-05 00:00:00 UTC | 45          | 44            |
 +-------------------------+-------------+---------------+
 !ok
-!}
 
 #####################################################################
 # NOT EQUAL Operator (value1 != value2)

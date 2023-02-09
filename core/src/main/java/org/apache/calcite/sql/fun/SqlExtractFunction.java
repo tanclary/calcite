@@ -88,12 +88,15 @@ public class SqlExtractFunction extends SqlFunction {
   }
 
   @Override public SqlMonotonicity getMonotonicity(SqlOperatorBinding call) {
-    TimeUnitRange value = getOperandLiteralValueOrThrow(call, 0, TimeUnitRange.class);
-    switch (value) {
-    case YEAR:
-      return call.getOperandMonotonicity(1).unstrict();
-    default:
-      return SqlMonotonicity.NOT_MONOTONIC;
+    if (call.isOperandTimeFrame(0)) {
+      TimeUnitRange value = getOperandLiteralValueOrThrow(call, 0, TimeUnitRange.class);
+      switch (value) {
+      case YEAR:
+        return call.getOperandMonotonicity(1).unstrict();
+      default:
+        return SqlMonotonicity.NOT_MONOTONIC;
+      }
     }
+    return SqlMonotonicity.NOT_MONOTONIC;
   }
 }

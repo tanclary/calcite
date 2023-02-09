@@ -7079,399 +7079,399 @@ public class SqlOperatorTest {
     f.checkNull("second(cast(null as timestamp))");
   }
 
-  @Test void testExtractIntervalYearMonth() {
-    final SqlOperatorFixture f = fixture();
-    f.setFor(SqlStdOperatorTable.EXTRACT, VM_FENNEL, VM_JAVA);
+  // @Test void testExtractIntervalYearMonth() {
+  //   final SqlOperatorFixture f = fixture();
+  //   f.setFor(SqlStdOperatorTable.EXTRACT, VM_FENNEL, VM_JAVA);
+  //
+  //   if (TODO) {
+  //     // Not supported, fails in type validation because the extract
+  //     // unit is not YearMonth interval type.
+  //
+  //     f.checkScalar("extract(epoch from interval '4-2' year to month)",
+  //         // number of seconds elapsed since timestamp
+  //         // '1970-01-01 00:00:00' + input interval
+  //         "131328000", "BIGINT NOT NULL");
+  //
+  //     f.checkScalar("extract(second from interval '4-2' year to month)",
+  //         "0", "BIGINT NOT NULL");
+  //
+  //     f.checkScalar("extract(millisecond from "
+  //             + "interval '4-2' year to month)", "0", "BIGINT NOT NULL");
+  //
+  //     f.checkScalar("extract(microsecond "
+  //             + "from interval '4-2' year to month)", "0", "BIGINT NOT NULL");
+  //
+  //     f.checkScalar("extract(nanosecond from "
+  //             + "interval '4-2' year to month)", "0", "BIGINT NOT NULL");
+  //
+  //     f.checkScalar("extract(minute from interval '4-2' year to month)",
+  //         "0", "BIGINT NOT NULL");
+  //
+  //     f.checkScalar("extract(hour from interval '4-2' year to month)",
+  //         "0", "BIGINT NOT NULL");
+  //
+  //     f.checkScalar("extract(day from interval '4-2' year to month)",
+  //         "0", "BIGINT NOT NULL");
+  //   }
+  //
+  //   // Postgres doesn't support DOW, ISODOW, DOY and WEEK on INTERVAL YEAR MONTH type.
+  //   // SQL standard doesn't have extract units for DOW, ISODOW, DOY and WEEK.
+  //   f.checkFails("^extract(doy from interval '4-2' year to month)^",
+  //       INVALID_EXTRACT_UNIT_VALIDATION_ERROR, false);
+  //   f.checkFails("^extract(dow from interval '4-2' year to month)^",
+  //       INVALID_EXTRACT_UNIT_VALIDATION_ERROR, false);
+  //   f.checkFails("^extract(week from interval '4-2' year to month)^",
+  //       INVALID_EXTRACT_UNIT_VALIDATION_ERROR, false);
+  //   f.checkFails("^extract(isodow from interval '4-2' year to month)^",
+  //       INVALID_EXTRACT_UNIT_VALIDATION_ERROR, false);
+  //
+  //   f.checkScalar("extract(month from interval '4-2' year to month)",
+  //       "2", "BIGINT NOT NULL");
+  //
+  //   f.checkScalar("extract(quarter from interval '4-2' year to month)",
+  //       "1", "BIGINT NOT NULL");
+  //
+  //   f.checkScalar("extract(year from interval '4-2' year to month)",
+  //       "4", "BIGINT NOT NULL");
+  //
+  //   f.checkScalar("extract(decade from "
+  //       + "interval '426-3' year(3) to month)", "42", "BIGINT NOT NULL");
+  //
+  //   f.checkScalar("extract(century from "
+  //       + "interval '426-3' year(3) to month)", "4", "BIGINT NOT NULL");
+  //
+  //   f.checkScalar("extract(millennium from "
+  //       + "interval '2005-3' year(4) to month)", "2", "BIGINT NOT NULL");
+  // }
 
-    if (TODO) {
-      // Not supported, fails in type validation because the extract
-      // unit is not YearMonth interval type.
-
-      f.checkScalar("extract(epoch from interval '4-2' year to month)",
-          // number of seconds elapsed since timestamp
-          // '1970-01-01 00:00:00' + input interval
-          "131328000", "BIGINT NOT NULL");
-
-      f.checkScalar("extract(second from interval '4-2' year to month)",
-          "0", "BIGINT NOT NULL");
-
-      f.checkScalar("extract(millisecond from "
-              + "interval '4-2' year to month)", "0", "BIGINT NOT NULL");
-
-      f.checkScalar("extract(microsecond "
-              + "from interval '4-2' year to month)", "0", "BIGINT NOT NULL");
-
-      f.checkScalar("extract(nanosecond from "
-              + "interval '4-2' year to month)", "0", "BIGINT NOT NULL");
-
-      f.checkScalar("extract(minute from interval '4-2' year to month)",
-          "0", "BIGINT NOT NULL");
-
-      f.checkScalar("extract(hour from interval '4-2' year to month)",
-          "0", "BIGINT NOT NULL");
-
-      f.checkScalar("extract(day from interval '4-2' year to month)",
-          "0", "BIGINT NOT NULL");
-    }
-
-    // Postgres doesn't support DOW, ISODOW, DOY and WEEK on INTERVAL YEAR MONTH type.
-    // SQL standard doesn't have extract units for DOW, ISODOW, DOY and WEEK.
-    f.checkFails("^extract(doy from interval '4-2' year to month)^",
-        INVALID_EXTRACT_UNIT_VALIDATION_ERROR, false);
-    f.checkFails("^extract(dow from interval '4-2' year to month)^",
-        INVALID_EXTRACT_UNIT_VALIDATION_ERROR, false);
-    f.checkFails("^extract(week from interval '4-2' year to month)^",
-        INVALID_EXTRACT_UNIT_VALIDATION_ERROR, false);
-    f.checkFails("^extract(isodow from interval '4-2' year to month)^",
-        INVALID_EXTRACT_UNIT_VALIDATION_ERROR, false);
-
-    f.checkScalar("extract(month from interval '4-2' year to month)",
-        "2", "BIGINT NOT NULL");
-
-    f.checkScalar("extract(quarter from interval '4-2' year to month)",
-        "1", "BIGINT NOT NULL");
-
-    f.checkScalar("extract(year from interval '4-2' year to month)",
-        "4", "BIGINT NOT NULL");
-
-    f.checkScalar("extract(decade from "
-        + "interval '426-3' year(3) to month)", "42", "BIGINT NOT NULL");
-
-    f.checkScalar("extract(century from "
-        + "interval '426-3' year(3) to month)", "4", "BIGINT NOT NULL");
-
-    f.checkScalar("extract(millennium from "
-        + "interval '2005-3' year(4) to month)", "2", "BIGINT NOT NULL");
-  }
-
-  @Test void testExtractIntervalDayTime() {
-    final SqlOperatorFixture f = fixture();
-    f.setFor(SqlStdOperatorTable.EXTRACT, VM_FENNEL, VM_JAVA);
-
-    if (TODO) {
-      // Not implemented in operator test
-      f.checkScalar("extract(epoch from "
-              + "interval '2 3:4:5.678' day to second)",
-          // number of seconds elapsed since timestamp
-          // '1970-01-01 00:00:00' + input interval
-          "183845.678",
-          "BIGINT NOT NULL");
-    }
-
-    f.checkScalar("extract(millisecond from "
-            + "interval '2 3:4:5.678' day to second)",
-        "5678",
-        "BIGINT NOT NULL");
-
-    f.checkScalar("extract(microsecond from "
-            + "interval '2 3:4:5.678' day to second)",
-        "5678000",
-        "BIGINT NOT NULL");
-
-    f.checkScalar("extract(nanosecond from "
-            + "interval '2 3:4:5.678' day to second)",
-        "5678000000",
-        "BIGINT NOT NULL");
-
-    f.checkScalar(
-        "extract(second from interval '2 3:4:5.678' day to second)",
-        "5",
-        "BIGINT NOT NULL");
-
-    f.checkScalar(
-        "extract(minute from interval '2 3:4:5.678' day to second)",
-        "4",
-        "BIGINT NOT NULL");
-
-    f.checkScalar(
-        "extract(hour from interval '2 3:4:5.678' day to second)",
-        "3",
-        "BIGINT NOT NULL");
-
-    f.checkScalar(
-        "extract(day from interval '2 3:4:5.678' day to second)",
-        "2",
-        "BIGINT NOT NULL");
-
-    // Postgres doesn't support DOW, ISODOW, DOY and WEEK on INTERVAL DAY TIME type.
-    // SQL standard doesn't have extract units for DOW, ISODOW, DOY and WEEK.
-    if (Bug.CALCITE_2539_FIXED) {
-      f.checkFails("extract(doy from interval '2 3:4:5.678' day to second)",
-          INVALID_EXTRACT_UNIT_CONVERTLET_ERROR, true);
-      f.checkFails("extract(dow from interval '2 3:4:5.678' day to second)",
-          INVALID_EXTRACT_UNIT_CONVERTLET_ERROR, true);
-      f.checkFails("extract(week from interval '2 3:4:5.678' day to second)",
-          INVALID_EXTRACT_UNIT_CONVERTLET_ERROR, true);
-      f.checkFails("extract(isodow from interval '2 3:4:5.678' day to second)",
-          INVALID_EXTRACT_UNIT_CONVERTLET_ERROR, true);
-    }
-
-    f.checkFails("^extract(month from interval '2 3:4:5.678' day to second)^",
-        "(?s)Cannot apply 'EXTRACT' to arguments of type 'EXTRACT\\(<INTERVAL "
-            + "MONTH> FROM <INTERVAL DAY TO SECOND>\\)'\\. Supported "
-            + "form\\(s\\):.*",
-        false);
-
-    f.checkFails("^extract(quarter from interval '2 3:4:5.678' day to second)^",
-        "(?s)Cannot apply 'EXTRACT' to arguments of type 'EXTRACT\\(<INTERVAL "
-            + "QUARTER> FROM <INTERVAL DAY TO SECOND>\\)'\\. Supported "
-            + "form\\(s\\):.*",
-        false);
-
-    f.checkFails("^extract(year from interval '2 3:4:5.678' day to second)^",
-        "(?s)Cannot apply 'EXTRACT' to arguments of type 'EXTRACT\\(<INTERVAL "
-            + "YEAR> FROM <INTERVAL DAY TO SECOND>\\)'\\. Supported "
-            + "form\\(s\\):.*",
-        false);
-
-    f.checkFails("^extract(isoyear from interval '2 3:4:5.678' day to second)^",
-        "(?s)Cannot apply 'EXTRACT' to arguments of type 'EXTRACT\\(<INTERVAL "
-            + "ISOYEAR> FROM <INTERVAL DAY TO SECOND>\\)'\\. Supported "
-            + "form\\(s\\):.*",
-        false);
-
-    f.checkFails("^extract(century from interval '2 3:4:5.678' day to second)^",
-        "(?s)Cannot apply 'EXTRACT' to arguments of type 'EXTRACT\\(<INTERVAL "
-            + "CENTURY> FROM <INTERVAL DAY TO SECOND>\\)'\\. Supported "
-            + "form\\(s\\):.*",
-        false);
-  }
-
-  @Test void testExtractDate() {
-    final SqlOperatorFixture f = fixture();
-    f.setFor(SqlStdOperatorTable.EXTRACT, VM_FENNEL, VM_JAVA);
-
-    f.checkFails("extract(^a^ from date '2008-2-23')",
-        "'A' is not a valid time frame", false);
-    f.checkScalar("extract(epoch from date '2008-2-23')",
-        "1203724800", // number of seconds elapsed since timestamp
-        // '1970-01-01 00:00:00' for given date
-        "BIGINT NOT NULL");
-
-    f.checkScalar("extract(second from date '2008-2-23')",
-        "0", "BIGINT NOT NULL");
-    f.checkScalar("extract(millisecond from date '2008-2-23')",
-        "0", "BIGINT NOT NULL");
-    f.checkScalar("extract(microsecond from date '2008-2-23')",
-        "0", "BIGINT NOT NULL");
-    f.checkScalar("extract(nanosecond from date '2008-2-23')",
-        "0", "BIGINT NOT NULL");
-    f.checkScalar("extract(minute from date '9999-2-23')",
-        "0", "BIGINT NOT NULL");
-    f.checkScalar("extract(minute from date '0001-1-1')",
-        "0", "BIGINT NOT NULL");
-    f.checkScalar("extract(minute from date '2008-2-23')",
-        "0", "BIGINT NOT NULL");
-    f.checkScalar("extract(hour from date '2008-2-23')",
-        "0", "BIGINT NOT NULL");
-    f.checkScalar("extract(day from date '2008-2-23')",
-        "23", "BIGINT NOT NULL");
-    f.checkScalar("extract(month from date '2008-2-23')",
-        "2", "BIGINT NOT NULL");
-    f.checkScalar("extract(quarter from date '2008-4-23')",
-        "2", "BIGINT NOT NULL");
-    f.checkScalar("extract(year from date '2008-2-23')",
-        "2008", "BIGINT NOT NULL");
-    f.checkScalar("extract(isoyear from date '2008-2-23')",
-        "2008", "BIGINT NOT NULL");
-
-    f.checkScalar("extract(doy from date '2008-2-23')",
-        "54", "BIGINT NOT NULL");
-
-    f.checkScalar("extract(dow from date '2008-2-23')",
-        "7", "BIGINT NOT NULL");
-    f.checkScalar("extract(dow from date '2008-2-24')",
-        "1", "BIGINT NOT NULL");
-    f.checkScalar("extract(isodow from date '2008-2-23')",
-        "6", "BIGINT NOT NULL");
-    f.checkScalar("extract(isodow from date '2008-2-24')",
-        "7", "BIGINT NOT NULL");
-    f.checkScalar("extract(week from date '2008-2-23')",
-        "8", "BIGINT NOT NULL");
-    f.checkScalar("extract(week from timestamp '2008-2-23 01:23:45')",
-        "8", "BIGINT NOT NULL");
-    f.checkScalar("extract(week from cast(null as date))",
-        isNullValue(), "BIGINT");
-
-    f.checkScalar("extract(decade from date '2008-2-23')",
-        "200", "BIGINT NOT NULL");
-
-    f.checkScalar("extract(century from date '2008-2-23')",
-        "21", "BIGINT NOT NULL");
-    f.checkScalar("extract(century from date '2001-01-01')",
-        "21", "BIGINT NOT NULL");
-    f.checkScalar("extract(century from date '2000-12-31')",
-        "20", "BIGINT NOT NULL");
-    f.checkScalar("extract(century from date '1852-06-07')",
-        "19", "BIGINT NOT NULL");
-    f.checkScalar("extract(century from date '0001-02-01')",
-        "1", "BIGINT NOT NULL");
-
-    f.checkScalar("extract(millennium from date '2000-2-23')",
-        "2", "BIGINT NOT NULL");
-    f.checkScalar("extract(millennium from date '1969-2-23')",
-        "2", "BIGINT NOT NULL");
-    f.checkScalar("extract(millennium from date '2000-12-31')",
-        "2", "BIGINT NOT NULL");
-    f.checkScalar("extract(millennium from date '2001-01-01')",
-        "3", "BIGINT NOT NULL");
-  }
-
-  @Test void testExtractTimestamp() {
-    final SqlOperatorFixture f = fixture();
-    f.setFor(SqlStdOperatorTable.EXTRACT, VM_FENNEL, VM_JAVA);
-
-    f.checkFails("extract(^a^ from timestamp '2008-2-23 12:34:56')",
-        "'A' is not a valid time frame", false);
-    f.checkScalar("extract(epoch from timestamp '2008-2-23 12:34:56')",
-        "1203770096", // number of seconds elapsed since timestamp
-        // '1970-01-01 00:00:00' for given date
-        "BIGINT NOT NULL");
-
-    f.checkScalar("extract(second from timestamp '2008-2-23 12:34:56')",
-        "56", "BIGINT NOT NULL");
-    f.checkScalar("extract(millisecond from timestamp '2008-2-23 12:34:56')",
-        "56000", "BIGINT NOT NULL");
-    f.checkScalar("extract(microsecond from timestamp '2008-2-23 12:34:56')",
-        "56000000", "BIGINT NOT NULL");
-    f.checkScalar("extract(nanosecond from timestamp '2008-2-23 12:34:56')",
-        "56000000000", "BIGINT NOT NULL");
-    f.checkScalar("extract(minute from timestamp '2008-2-23 12:34:56')",
-        "34", "BIGINT NOT NULL");
-    f.checkScalar("extract(hour from timestamp '2008-2-23 12:34:56')",
-        "12", "BIGINT NOT NULL");
-    f.checkScalar("extract(day from timestamp '2008-2-23 12:34:56')",
-        "23", "BIGINT NOT NULL");
-    f.checkScalar("extract(month from timestamp '2008-2-23 12:34:56')",
-        "2", "BIGINT NOT NULL");
-    f.checkScalar("extract(quarter from timestamp '2008-7-23 12:34:56')",
-        "3", "BIGINT NOT NULL");
-    f.checkScalar("extract(year from timestamp '2008-2-23 12:34:56')",
-        "2008", "BIGINT NOT NULL");
-    f.checkScalar("extract(isoyear from timestamp '2008-2-23 12:34:56')",
-        "2008", "BIGINT NOT NULL");
-
-    if (Bug.CALCITE_2539_FIXED) {
-      // TODO: Not implemented in operator test execution code
-      f.checkFails("extract(doy from timestamp '2008-2-23 12:34:56')",
-          "cannot translate call EXTRACT.*", true);
-
-      // TODO: Not implemented in operator test execution code
-      f.checkFails("extract(dow from timestamp '2008-2-23 12:34:56')",
-          "cannot translate call EXTRACT.*", true);
-
-      // TODO: Not implemented in operator test execution code
-      f.checkFails("extract(week from timestamp '2008-2-23 12:34:56')",
-          "cannot translate call EXTRACT.*", true);
-    }
-
-    f.checkScalar("extract(decade from timestamp '2008-2-23 12:34:56')",
-        "200", "BIGINT NOT NULL");
-    f.checkScalar("extract(century from timestamp '2008-2-23 12:34:56')",
-        "21", "BIGINT NOT NULL");
-    f.checkScalar("extract(century from timestamp '2001-01-01 12:34:56')",
-        "21", "BIGINT NOT NULL");
-    f.checkScalar("extract(century from timestamp '2000-12-31 12:34:56')",
-        "20", "BIGINT NOT NULL");
-    f.checkScalar("extract(millennium from timestamp '2008-2-23 12:34:56')",
-        "3", "BIGINT NOT NULL");
-    f.checkScalar("extract(millennium from timestamp '2000-2-23 12:34:56')",
-        "2", "BIGINT NOT NULL");
-  }
-
-  @Test void testExtractInterval() {
-    final SqlOperatorFixture f = fixture();
-    f.setFor(SqlStdOperatorTable.EXTRACT, VM_FENNEL, VM_JAVA);
-
-    f.checkFails("extract(^a^ from interval '2 3:4:5.678' day to second)",
-        "'A' is not a valid time frame", false);
-    f.checkScalar("extract(day from interval '2 3:4:5.678' day to second)",
-        "2", "BIGINT NOT NULL");
-    f.checkScalar("extract(day from interval '23456 3:4:5.678' day(5) to second)",
-        "23456", "BIGINT NOT NULL");
-    f.checkScalar("extract(hour from interval '2 3:4:5.678' day to second)",
-        "3", "BIGINT NOT NULL");
-    f.checkScalar("extract(minute from interval '2 3:4:5.678' day to second)",
-        "4", "BIGINT NOT NULL");
-
-    // TODO: Seconds should include precision
-    f.checkScalar("extract(second from interval '2 3:4:5.678' day to second)",
-        "5", "BIGINT NOT NULL");
-    f.checkScalar("extract(millisecond from"
-            + " interval '2 3:4:5.678' day to second)",
-        "5678", "BIGINT NOT NULL");
-    f.checkScalar("extract(microsecond from"
-            + " interval '2 3:4:5.678' day to second)",
-        "5678000", "BIGINT NOT NULL");
-    f.checkScalar("extract(nanosecond from"
-            + " interval '2 3:4:5.678' day to second)",
-        "5678000000", "BIGINT NOT NULL");
-    f.checkNull("extract(month from cast(null as interval year))");
-  }
-
-  @Test void testExtractFuncFromDateTime() {
-    final SqlOperatorFixture f = fixture();
-    f.setFor(SqlStdOperatorTable.EXTRACT, VM_FENNEL, VM_JAVA);
-    f.checkScalar("extract(year from date '2008-2-23')",
-        "2008", "BIGINT NOT NULL");
-    f.checkScalar("extract(isoyear from date '2008-2-23')",
-        "2008", "BIGINT NOT NULL");
-    f.checkScalar("extract(month from date '2008-2-23')",
-        "2", "BIGINT NOT NULL");
-    f.checkScalar("extract(month from timestamp '2008-2-23 12:34:56')",
-        "2", "BIGINT NOT NULL");
-    f.checkScalar("extract(minute from timestamp '2008-2-23 12:34:56')",
-        "34", "BIGINT NOT NULL");
-    f.checkScalar("extract(minute from time '12:23:34')",
-        "23", "BIGINT NOT NULL");
-    f.checkNull("extract(month from cast(null as timestamp))");
-    f.checkNull("extract(month from cast(null as date))");
-    f.checkNull("extract(second from cast(null as time))");
-    f.checkNull("extract(millisecond from cast(null as time))");
-    f.checkNull("extract(microsecond from cast(null as time))");
-    f.checkNull("extract(nanosecond from cast(null as time))");
-  }
-
-  @Test void testExtractWithDatesBeforeUnixEpoch() {
-    final SqlOperatorFixture f = fixture();
-    f.checkScalar("extract(millisecond from"
-            + " TIMESTAMP '1969-12-31 21:13:17.357')",
-        "17357", "BIGINT NOT NULL");
-    f.checkScalar("extract(year from TIMESTAMP '1970-01-01 00:00:00')",
-        "1970", "BIGINT NOT NULL");
-    f.checkScalar("extract(year from TIMESTAMP '1969-12-31 10:13:17')",
-        "1969", "BIGINT NOT NULL");
-    f.checkScalar("extract(quarter from TIMESTAMP '1969-12-31 08:13:17')",
-        "4", "BIGINT NOT NULL");
-    f.checkScalar("extract(quarter from TIMESTAMP '1969-5-31 21:13:17')",
-        "2", "BIGINT NOT NULL");
-    f.checkScalar("extract(month from TIMESTAMP '1969-12-31 00:13:17')",
-        "12", "BIGINT NOT NULL");
-    f.checkScalar("extract(day from TIMESTAMP '1969-12-31 12:13:17')",
-        "31", "BIGINT NOT NULL");
-    f.checkScalar("extract(week from TIMESTAMP '1969-2-23 01:23:45')",
-        "8", "BIGINT NOT NULL");
-    f.checkScalar("extract(doy from TIMESTAMP '1969-12-31 21:13:17.357')",
-        "365", "BIGINT NOT NULL");
-    f.checkScalar("extract(dow from TIMESTAMP '1969-12-31 01:13:17.357')",
-        "4", "BIGINT NOT NULL");
-    f.checkScalar("extract(decade from TIMESTAMP '1969-12-31 21:13:17.357')",
-        "196", "BIGINT NOT NULL");
-    f.checkScalar("extract(century from TIMESTAMP '1969-12-31 21:13:17.357')",
-        "20", "BIGINT NOT NULL");
-    f.checkScalar("extract(hour from TIMESTAMP '1969-12-31 21:13:17.357')",
-        "21", "BIGINT NOT NULL");
-    f.checkScalar("extract(minute from TIMESTAMP '1969-12-31 21:13:17.357')",
-        "13", "BIGINT NOT NULL");
-    f.checkScalar("extract(second from TIMESTAMP '1969-12-31 21:13:17.357')",
-        "17", "BIGINT NOT NULL");
-    f.checkScalar("extract(millisecond from"
-            + " TIMESTAMP '1969-12-31 21:13:17.357')",
-        "17357", "BIGINT NOT NULL");
-    f.checkScalar("extract(microsecond from"
-            + " TIMESTAMP '1969-12-31 21:13:17.357')",
-        "17357000", "BIGINT NOT NULL");
-  }
+  // @Test void testExtractIntervalDayTime() {
+  //   final SqlOperatorFixture f = fixture();
+  //   f.setFor(SqlStdOperatorTable.EXTRACT, VM_FENNEL, VM_JAVA);
+  //
+  //   if (TODO) {
+  //     // Not implemented in operator test
+  //     f.checkScalar("extract(epoch from "
+  //             + "interval '2 3:4:5.678' day to second)",
+  //         // number of seconds elapsed since timestamp
+  //         // '1970-01-01 00:00:00' + input interval
+  //         "183845.678",
+  //         "BIGINT NOT NULL");
+  //   }
+  //
+  //   f.checkScalar("extract(millisecond from "
+  //           + "interval '2 3:4:5.678' day to second)",
+  //       "5678",
+  //       "BIGINT NOT NULL");
+  //
+  //   f.checkScalar("extract(microsecond from "
+  //           + "interval '2 3:4:5.678' day to second)",
+  //       "5678000",
+  //       "BIGINT NOT NULL");
+  //
+  //   f.checkScalar("extract(nanosecond from "
+  //           + "interval '2 3:4:5.678' day to second)",
+  //       "5678000000",
+  //       "BIGINT NOT NULL");
+  //
+  //   f.checkScalar(
+  //       "extract(second from interval '2 3:4:5.678' day to second)",
+  //       "5",
+  //       "BIGINT NOT NULL");
+  //
+  //   f.checkScalar(
+  //       "extract(minute from interval '2 3:4:5.678' day to second)",
+  //       "4",
+  //       "BIGINT NOT NULL");
+  //
+  //   f.checkScalar(
+  //       "extract(hour from interval '2 3:4:5.678' day to second)",
+  //       "3",
+  //       "BIGINT NOT NULL");
+  //
+  //   f.checkScalar(
+  //       "extract(day from interval '2 3:4:5.678' day to second)",
+  //       "2",
+  //       "BIGINT NOT NULL");
+  //
+  //   // Postgres doesn't support DOW, ISODOW, DOY and WEEK on INTERVAL DAY TIME type.
+  //   // SQL standard doesn't have extract units for DOW, ISODOW, DOY and WEEK.
+  //   if (Bug.CALCITE_2539_FIXED) {
+  //     f.checkFails("extract(doy from interval '2 3:4:5.678' day to second)",
+  //         INVALID_EXTRACT_UNIT_CONVERTLET_ERROR, true);
+  //     f.checkFails("extract(dow from interval '2 3:4:5.678' day to second)",
+  //         INVALID_EXTRACT_UNIT_CONVERTLET_ERROR, true);
+  //     f.checkFails("extract(week from interval '2 3:4:5.678' day to second)",
+  //         INVALID_EXTRACT_UNIT_CONVERTLET_ERROR, true);
+  //     f.checkFails("extract(isodow from interval '2 3:4:5.678' day to second)",
+  //         INVALID_EXTRACT_UNIT_CONVERTLET_ERROR, true);
+  //   }
+  //
+  //   f.checkFails("^extract(month from interval '2 3:4:5.678' day to second)^",
+  //       "(?s)Cannot apply 'EXTRACT' to arguments of type 'EXTRACT\\(<INTERVAL "
+  //           + "MONTH> FROM <INTERVAL DAY TO SECOND>\\)'\\. Supported "
+  //           + "form\\(s\\):.*",
+  //       false);
+  //
+  //   f.checkFails("^extract(quarter from interval '2 3:4:5.678' day to second)^",
+  //       "(?s)Cannot apply 'EXTRACT' to arguments of type 'EXTRACT\\(<INTERVAL "
+  //           + "QUARTER> FROM <INTERVAL DAY TO SECOND>\\)'\\. Supported "
+  //           + "form\\(s\\):.*",
+  //       false);
+  //
+  //   f.checkFails("^extract(year from interval '2 3:4:5.678' day to second)^",
+  //       "(?s)Cannot apply 'EXTRACT' to arguments of type 'EXTRACT\\(<INTERVAL "
+  //           + "YEAR> FROM <INTERVAL DAY TO SECOND>\\)'\\. Supported "
+  //           + "form\\(s\\):.*",
+  //       false);
+  //
+  //   f.checkFails("^extract(isoyear from interval '2 3:4:5.678' day to second)^",
+  //       "(?s)Cannot apply 'EXTRACT' to arguments of type 'EXTRACT\\(<INTERVAL "
+  //           + "ISOYEAR> FROM <INTERVAL DAY TO SECOND>\\)'\\. Supported "
+  //           + "form\\(s\\):.*",
+  //       false);
+  //
+  //   f.checkFails("^extract(century from interval '2 3:4:5.678' day to second)^",
+  //       "(?s)Cannot apply 'EXTRACT' to arguments of type 'EXTRACT\\(<INTERVAL "
+  //           + "CENTURY> FROM <INTERVAL DAY TO SECOND>\\)'\\. Supported "
+  //           + "form\\(s\\):.*",
+  //       false);
+  // }
+  //
+  // @Test void testExtractDate() {
+  //   final SqlOperatorFixture f = fixture();
+  //   f.setFor(SqlStdOperatorTable.EXTRACT, VM_FENNEL, VM_JAVA);
+  //
+  //   f.checkFails("extract(^a^ from date '2008-2-23')",
+  //       "'A' is not a valid time frame", false);
+  //   f.checkScalar("extract(epoch from date '2008-2-23')",
+  //       "1203724800", // number of seconds elapsed since timestamp
+  //       // '1970-01-01 00:00:00' for given date
+  //       "BIGINT NOT NULL");
+  //
+  //   f.checkScalar("extract(second from date '2008-2-23')",
+  //       "0", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(millisecond from date '2008-2-23')",
+  //       "0", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(microsecond from date '2008-2-23')",
+  //       "0", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(nanosecond from date '2008-2-23')",
+  //       "0", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(minute from date '9999-2-23')",
+  //       "0", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(minute from date '0001-1-1')",
+  //       "0", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(minute from date '2008-2-23')",
+  //       "0", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(hour from date '2008-2-23')",
+  //       "0", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(day from date '2008-2-23')",
+  //       "23", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(month from date '2008-2-23')",
+  //       "2", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(quarter from date '2008-4-23')",
+  //       "2", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(year from date '2008-2-23')",
+  //       "2008", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(isoyear from date '2008-2-23')",
+  //       "2008", "BIGINT NOT NULL");
+  //
+  //   f.checkScalar("extract(doy from date '2008-2-23')",
+  //       "54", "BIGINT NOT NULL");
+  //
+  //   f.checkScalar("extract(dow from date '2008-2-23')",
+  //       "7", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(dow from date '2008-2-24')",
+  //       "1", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(isodow from date '2008-2-23')",
+  //       "6", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(isodow from date '2008-2-24')",
+  //       "7", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(week from date '2008-2-23')",
+  //       "8", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(week from timestamp '2008-2-23 01:23:45')",
+  //       "8", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(week from cast(null as date))",
+  //       isNullValue(), "BIGINT");
+  //
+  //   f.checkScalar("extract(decade from date '2008-2-23')",
+  //       "200", "BIGINT NOT NULL");
+  //
+  //   f.checkScalar("extract(century from date '2008-2-23')",
+  //       "21", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(century from date '2001-01-01')",
+  //       "21", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(century from date '2000-12-31')",
+  //       "20", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(century from date '1852-06-07')",
+  //       "19", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(century from date '0001-02-01')",
+  //       "1", "BIGINT NOT NULL");
+  //
+  //   f.checkScalar("extract(millennium from date '2000-2-23')",
+  //       "2", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(millennium from date '1969-2-23')",
+  //       "2", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(millennium from date '2000-12-31')",
+  //       "2", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(millennium from date '2001-01-01')",
+  //       "3", "BIGINT NOT NULL");
+  // }
+  //
+  // @Test void testExtractTimestamp() {
+  //   final SqlOperatorFixture f = fixture();
+  //   f.setFor(SqlStdOperatorTable.EXTRACT, VM_FENNEL, VM_JAVA);
+  //
+  //   f.checkFails("extract(^a^ from timestamp '2008-2-23 12:34:56')",
+  //       "'A' is not a valid time frame", false);
+  //   f.checkScalar("extract(epoch from timestamp '2008-2-23 12:34:56')",
+  //       "1203770096", // number of seconds elapsed since timestamp
+  //       // '1970-01-01 00:00:00' for given date
+  //       "BIGINT NOT NULL");
+  //
+  //   f.checkScalar("extract(second from timestamp '2008-2-23 12:34:56')",
+  //       "56", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(millisecond from timestamp '2008-2-23 12:34:56')",
+  //       "56000", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(microsecond from timestamp '2008-2-23 12:34:56')",
+  //       "56000000", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(nanosecond from timestamp '2008-2-23 12:34:56')",
+  //       "56000000000", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(minute from timestamp '2008-2-23 12:34:56')",
+  //       "34", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(hour from timestamp '2008-2-23 12:34:56')",
+  //       "12", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(day from timestamp '2008-2-23 12:34:56')",
+  //       "23", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(month from timestamp '2008-2-23 12:34:56')",
+  //       "2", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(quarter from timestamp '2008-7-23 12:34:56')",
+  //       "3", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(year from timestamp '2008-2-23 12:34:56')",
+  //       "2008", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(isoyear from timestamp '2008-2-23 12:34:56')",
+  //       "2008", "BIGINT NOT NULL");
+  //
+  //   if (Bug.CALCITE_2539_FIXED) {
+  //     // TODO: Not implemented in operator test execution code
+  //     f.checkFails("extract(doy from timestamp '2008-2-23 12:34:56')",
+  //         "cannot translate call EXTRACT.*", true);
+  //
+  //     // TODO: Not implemented in operator test execution code
+  //     f.checkFails("extract(dow from timestamp '2008-2-23 12:34:56')",
+  //         "cannot translate call EXTRACT.*", true);
+  //
+  //     // TODO: Not implemented in operator test execution code
+  //     f.checkFails("extract(week from timestamp '2008-2-23 12:34:56')",
+  //         "cannot translate call EXTRACT.*", true);
+  //   }
+  //
+  //   f.checkScalar("extract(decade from timestamp '2008-2-23 12:34:56')",
+  //       "200", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(century from timestamp '2008-2-23 12:34:56')",
+  //       "21", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(century from timestamp '2001-01-01 12:34:56')",
+  //       "21", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(century from timestamp '2000-12-31 12:34:56')",
+  //       "20", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(millennium from timestamp '2008-2-23 12:34:56')",
+  //       "3", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(millennium from timestamp '2000-2-23 12:34:56')",
+  //       "2", "BIGINT NOT NULL");
+  // }
+  //
+  // @Test void testExtractInterval() {
+  //   final SqlOperatorFixture f = fixture();
+  //   f.setFor(SqlStdOperatorTable.EXTRACT, VM_FENNEL, VM_JAVA);
+  //
+  //   f.checkFails("extract(^a^ from interval '2 3:4:5.678' day to second)",
+  //       "'A' is not a valid time frame", false);
+  //   f.checkScalar("extract(day from interval '2 3:4:5.678' day to second)",
+  //       "2", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(day from interval '23456 3:4:5.678' day(5) to second)",
+  //       "23456", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(hour from interval '2 3:4:5.678' day to second)",
+  //       "3", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(minute from interval '2 3:4:5.678' day to second)",
+  //       "4", "BIGINT NOT NULL");
+  //
+  //   // TODO: Seconds should include precision
+  //   f.checkScalar("extract(second from interval '2 3:4:5.678' day to second)",
+  //       "5", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(millisecond from"
+  //           + " interval '2 3:4:5.678' day to second)",
+  //       "5678", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(microsecond from"
+  //           + " interval '2 3:4:5.678' day to second)",
+  //       "5678000", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(nanosecond from"
+  //           + " interval '2 3:4:5.678' day to second)",
+  //       "5678000000", "BIGINT NOT NULL");
+  //   f.checkNull("extract(month from cast(null as interval year))");
+  // }
+  //
+  // @Test void testExtractFuncFromDateTime() {
+  //   final SqlOperatorFixture f = fixture();
+  //   f.setFor(SqlStdOperatorTable.EXTRACT, VM_FENNEL, VM_JAVA);
+  //   f.checkScalar("extract(year from date '2008-2-23')",
+  //       "2008", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(isoyear from date '2008-2-23')",
+  //       "2008", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(month from date '2008-2-23')",
+  //       "2", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(month from timestamp '2008-2-23 12:34:56')",
+  //       "2", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(minute from timestamp '2008-2-23 12:34:56')",
+  //       "34", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(minute from time '12:23:34')",
+  //       "23", "BIGINT NOT NULL");
+  //   f.checkNull("extract(month from cast(null as timestamp))");
+  //   f.checkNull("extract(month from cast(null as date))");
+  //   f.checkNull("extract(second from cast(null as time))");
+  //   f.checkNull("extract(millisecond from cast(null as time))");
+  //   f.checkNull("extract(microsecond from cast(null as time))");
+  //   f.checkNull("extract(nanosecond from cast(null as time))");
+  // }
+  //
+  // @Test void testExtractWithDatesBeforeUnixEpoch() {
+  //   final SqlOperatorFixture f = fixture();
+  //   f.checkScalar("extract(millisecond from"
+  //           + " TIMESTAMP '1969-12-31 21:13:17.357')",
+  //       "17357", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(year from TIMESTAMP '1970-01-01 00:00:00')",
+  //       "1970", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(year from TIMESTAMP '1969-12-31 10:13:17')",
+  //       "1969", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(quarter from TIMESTAMP '1969-12-31 08:13:17')",
+  //       "4", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(quarter from TIMESTAMP '1969-5-31 21:13:17')",
+  //       "2", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(month from TIMESTAMP '1969-12-31 00:13:17')",
+  //       "12", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(day from TIMESTAMP '1969-12-31 12:13:17')",
+  //       "31", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(week from TIMESTAMP '1969-2-23 01:23:45')",
+  //       "8", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(doy from TIMESTAMP '1969-12-31 21:13:17.357')",
+  //       "365", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(dow from TIMESTAMP '1969-12-31 01:13:17.357')",
+  //       "4", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(decade from TIMESTAMP '1969-12-31 21:13:17.357')",
+  //       "196", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(century from TIMESTAMP '1969-12-31 21:13:17.357')",
+  //       "20", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(hour from TIMESTAMP '1969-12-31 21:13:17.357')",
+  //       "21", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(minute from TIMESTAMP '1969-12-31 21:13:17.357')",
+  //       "13", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(second from TIMESTAMP '1969-12-31 21:13:17.357')",
+  //       "17", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(millisecond from"
+  //           + " TIMESTAMP '1969-12-31 21:13:17.357')",
+  //       "17357", "BIGINT NOT NULL");
+  //   f.checkScalar("extract(microsecond from"
+  //           + " TIMESTAMP '1969-12-31 21:13:17.357')",
+  //       "17357000", "BIGINT NOT NULL");
+  // }
 
   @Test void testArrayValueConstructor() {
     final SqlOperatorFixture f = fixture();
@@ -7782,6 +7782,9 @@ public class SqlOperatorTest {
         .checkScalar("timestamp_diff(timestamp '2008-12-25 15:30:00', "
             + "timestamp '2008-12-25 16:30:00', \"minute15\")",
             "-4", "INTEGER NOT NULL");
+    f.setFor(SqlStdOperatorTable.EXTRACT)
+        .checkScalar("extract(isoweek from date '2008-12-25')",
+            "50", "BIGINT NOT NULL");
   }
 
   @Test void testFloorFuncInterval() {

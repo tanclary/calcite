@@ -2670,12 +2670,20 @@ public class RexImpTable {
 
     @Override Expression implementSafe(final RexToLixTranslator translator,
         final RexCall call, final List<Expression> argValueList) {
-      final TimeUnitRange timeUnitRange =
-          (TimeUnitRange) translator.getLiteralValue(argValueList.get(0));
-      final TimeUnit unit = requireNonNull(timeUnitRange, "timeUnitRange").startUnit;
+      final Expression operand0 = argValueList.get(0);
+      final boolean custom = operand0.getType() == String.class;
       Expression operand = argValueList.get(1);
       final SqlTypeName sqlTypeName =
           call.operands.get(1).getType().getSqlTypeName();
+      if (custom) {
+        return Expressions.call(BuiltInMethod.CUSTOM_DATE_EXTRACT.method, translator.getRoot(),
+            operand0, operand);
+      }
+
+      final TimeUnitRange timeUnitRange =
+          (TimeUnitRange) translator.getLiteralValue(argValueList.get(0));
+      final TimeUnit unit = requireNonNull(timeUnitRange, "timeUnitRange").startUnit;
+
       switch (unit) {
       case MILLENNIUM:
       case CENTURY:
