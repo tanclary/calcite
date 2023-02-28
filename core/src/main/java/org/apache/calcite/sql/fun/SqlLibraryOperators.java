@@ -1060,16 +1060,18 @@ public abstract class SqlLibraryOperators {
               SqlTypeFamily.ANY));
 
   /** The "DATE_TRUNC(date, timeUnit)" function (BigQuery);
-   * truncates a DATE value to the beginning of a timeUnit. */
+   * truncates a DATE value to the beginning of a timeUnit.
+   *
+   * TODO(CALCITE-5290): Add `DATE_TRUNC` function consistent with Postgres. Currently, Postgres
+   *                     style calls can be parsed but fail validation. */
   @LibraryOperator(libraries = {BIG_QUERY})
   public static final SqlFunction DATE_TRUNC =
       SqlBasicFunction.create("DATE_TRUNC",
-              ReturnTypes.ARG0_NULLABLE,
-              OperandTypes.sequence("'DATE_TRUNC(<DATE>, <DATETIME_INTERVAL>)'",
-                  OperandTypes.DATE_OR_TIMESTAMP, OperandTypes.dateInterval()),
-              SqlFunctionCategory.TIMEDATE)
-          .withOperandHandler(OperandHandlers.OPERAND_1_MIGHT_BE_TIME_FRAME)
-          .withKind(SqlKind.DATE_TRUNC);
+          ReturnTypes.FIRST_DATETIME_ARG,
+          OperandTypes.sequence("'DATE_TRUNC(<DATE>, <DATETIME_INTERVAL>)'",
+              OperandTypes.DATE_OR_TIMESTAMP, OperandTypes.dateInterval()),
+          SqlFunctionCategory.TIMEDATE)
+          .withOperandHandler(OperandHandlers.OPERAND_1_MIGHT_BE_TIME_FRAME);
 
   /** The "TIME_SUB(time, interval)" function (BigQuery);
    * subtracts an interval from a time, independent of any time zone.
