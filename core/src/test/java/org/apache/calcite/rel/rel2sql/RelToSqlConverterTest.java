@@ -2234,6 +2234,22 @@ class RelToSqlConverterTest {
         .withBigQuery().ok(expectedBigQuery);
   }
 
+  /** Tests that DAYOFWEEK is preserved and not converted to DOW for BigQuery. */
+  @Test void testDayOfWeekForBigQuery() {
+    final String query = "select extract(dayofweek from date '2008-12-25') from \"product\"";
+    final String expected = "SELECT EXTRACT('DAYOFWEEK' FROM DATE '2008-12-25')\n"
+        + "FROM foodmart.product";
+    sql(query).withBigQuery().ok(expected);
+  }
+
+  /** Tests that DAYOFYEAR is preserved and not converted to DOY for BigQuery. */
+  @Test void testDayOfYearForBigQuery() {
+    final String query = "select extract(dayofyear from date '2008-12-25') from \"product\"";
+    final String expected = "SELECT EXTRACT('DAYOFYEAR' FROM DATE '2008-12-25')\n"
+        + "FROM foodmart.product";
+    sql(query).withBigQuery().ok(expected);
+  }
+
   @Test void testIdentifier() {
     // Note that IGNORE is reserved in BigQuery but not in standard SQL
     final String query = "select *\n"
