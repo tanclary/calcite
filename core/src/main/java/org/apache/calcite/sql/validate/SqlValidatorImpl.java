@@ -744,6 +744,21 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     }
   }
 
+<<<<<<< HEAD
+=======
+  private static int calculatePermuteOffset(List<SqlNode> selectItems) {
+    for (int i = 0; i < selectItems.size(); i++) {
+      SqlNode selectItem = selectItems.get(i);
+      SqlNode col = SqlUtil.stripAs(selectItem);
+      if (col.getKind() == SqlKind.IDENTIFIER
+          && selectItem.getKind() != SqlKind.AS) {
+        return i;
+      }
+    }
+    return 0;
+  }
+
+>>>>>>> ea9db4421 ([CALCITE-5660] Add array subscript operators OFFSET, ORDINAL, SAFE_OFFSET, SAFE_ORDINAL (enabled for BigQuery))
   private SqlNode maybeCast(SqlNode node, RelDataType currentType,
       RelDataType desiredType) {
     return SqlTypeUtil.equalSansNullability(typeFactory, currentType, desiredType)
