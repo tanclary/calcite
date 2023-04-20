@@ -420,6 +420,40 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
                 operand1)));
   }
 
+  /** Converts a call to the INSTR function.
+   * INSTR(string, substring, position, occurrence) is equivalent to
+   * POSITION(substring, string, position, occurrence) */
+  private static RexNode convertInstr(SqlRexContext cx, SqlCall call) {
+    final RexBuilder rexBuilder = cx.getRexBuilder();
+    final List<RexNode> operands =
+        convertOperands(cx, call, SqlOperandTypeChecker.Consistency.NONE);
+    final RelDataType type =
+        cx.getValidator().getValidatedNodeType(call);
+    final List<RexNode> exprs = new ArrayList<>();
+    switch (call.operandCount()) {
+    // Must reverse order of first 2 operands.
+    case 2:
+      exprs.add(operands.get(1)); // Substring
+      exprs.add(operands.get(0)); // String
+      break;
+    case 3:
+      exprs.add(operands.get(1)); // Substring
+      exprs.add(operands.get(0)); // String
+      exprs.add(operands.get(2)); // Position
+      break;
+    case 4:
+      exprs.add(operands.get(1)); // Substring
+      exprs.add(operands.get(0)); // String
+      exprs.add(operands.get(2)); // Position
+      exprs.add(operands.get(3)); // Occurrence
+      break;
+    default:
+      throw new UnsupportedOperationException("Position does not accept "
+          + call.operandCount() + " operands");
+    }
+    return rexBuilder.makeCall(type, SqlStdOperatorTable.POSITION, exprs);
+  }
+
   /** Converts a call to the DECODE function. */
   private static RexNode convertDecode(SqlRexContext cx, SqlCall call) {
     final RexBuilder rexBuilder = cx.getRexBuilder();
