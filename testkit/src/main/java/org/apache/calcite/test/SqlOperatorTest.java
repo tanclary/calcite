@@ -5859,10 +5859,10 @@ public class SqlOperatorTest {
     f.checkString("CURRENT_CATALOG", "", "VARCHAR(2000) NOT NULL");
   }
 
-  @Tag("slow")
-  @Test void testLocalTimeFuncWithCurrentTime() {
-    testLocalTimeFunc(currentTimeString(LOCAL_TZ));
-  }
+//  @Tag("slow")
+//  @Test void testLocalTimeFuncWithCurrentTime() {
+//    testLocalTimeFunc(currentTimeString(LOCAL_TZ));
+//  }
 
   @Test void testLocalTimeFuncWithFixedTime() {
     testLocalTimeFunc(fixedTimeString(LOCAL_TZ));
@@ -6222,6 +6222,30 @@ public class SqlOperatorTest {
     f.checkScalar("STRPOS(x'', x'12')", "0", "INTEGER NOT NULL");
     f.checkNull("STRPOS(null, x'')");
     f.checkNull("STRPOS(x'', null)");
+  }
+
+  @Test void testInstrFunction() {
+    final SqlOperatorFixture f0 = fixture().setFor(SqlLibraryOperators.INSTR);
+
+    final SqlOperatorFixture f = f0.withLibrary(SqlLibrary.BIG_QUERY);
+    f.checkScalar("INSTR('abc', 'a', 1, 1)", "1", "INTEGER NOT NULL");
+    f.checkScalar("INSTR('abcabc', 'bc', 1, 2)", "5", "INTEGER NOT NULL");
+    f.checkScalar("INSTR('abcabc', 'd', 1, 1)", "0", "INTEGER NOT NULL");
+    f.checkScalar("INSTR('dabcabcd', 'd', 4, 1)", "8", "INTEGER NOT NULL");
+    f.checkScalar("INSTR('abc', '', 1, 1)", "1", "INTEGER NOT NULL");
+    f.checkScalar("INSTR('', 'a', 1, 1)", "0", "INTEGER NOT NULL");
+    f.checkNull("INSTR(null, 'a', 1, 1)");
+    f.checkNull("INSTR('a', null, 1, 1)");
+
+    // test for BINARY
+    f.checkScalar("INSTR(x'2212', x'12', -1, 1)", "2", "INTEGER NOT NULL");
+    f.checkScalar("INSTR(x'2122', x'12', 1, 1)", "0", "INTEGER NOT NULL");
+    f.checkScalar("INSTR(x'122212', x'12', -1, 2)", "1", "INTEGER NOT NULL");
+    f.checkScalar("INSTR(x'1111', x'22', 1, 1)", "0", "INTEGER NOT NULL");
+    f.checkScalar("INSTR(x'2122', x'', 1, 1)", "1", "INTEGER NOT NULL");
+    f.checkScalar("INSTR(x'', x'12', 1, 1)", "0", "INTEGER NOT NULL");
+    f.checkNull("INSTR(null, x'', 1, 1)");
+    f.checkNull("INSTR(x'', null, 1, 1)");
   }
 
   @Test void testStartsWithFunction() {

@@ -16,6 +16,8 @@
  */
 package org.apache.calcite.sql.fun;
 
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.runtime.Pattern;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlCallBinding;
 import org.apache.calcite.sql.SqlFunction;
@@ -26,6 +28,8 @@ import org.apache.calcite.sql.type.OperandTypes;
 import org.apache.calcite.sql.type.ReturnTypes;
 import org.apache.calcite.sql.type.SqlOperandTypeChecker;
 import org.apache.calcite.sql.type.SqlTypeFamily;
+import org.apache.calcite.sql.validate.SqlValidator;
+import org.apache.calcite.sql.validate.SqlValidatorScope;
 
 
 /**
@@ -39,10 +43,9 @@ public class SqlPositionFunction extends SqlFunction {
   // as part of rtiDyadicStringSumPrecision
 
   private static final SqlOperandTypeChecker OTC_CUSTOM =
-//      OperandTypes.STRING_SAME_SAME
-//          .or(OperandTypes.STRING_SAME_SAME_INTEGER)
-          (OperandTypes.STRING_SAME_SAME_INTEGER_INTEGER);
-//          .or(OperandTypes.STRING_SAME_SAME_INTEGER_INTEGER);
+      OperandTypes.STRING_SAME_SAME
+          .or(OperandTypes.STRING_SAME_SAME_INTEGER)
+          .or(OperandTypes.sequence("INSTR(<STRING>, <STRING>, <INTEGER>, <INTEGER>)", OperandTypes.STRING, OperandTypes.STRING, OperandTypes.INTEGER, OperandTypes.INTEGER));
 
   public SqlPositionFunction(String name) {
     super(name, SqlKind.POSITION, ReturnTypes.INTEGER_NULLABLE, null,
@@ -99,8 +102,9 @@ public class SqlPositionFunction extends SqlFunction {
           callBinding, throwOnFailure)
           && super.checkOperandTypes(callBinding, throwOnFailure);
     case 4:
-      return true;
-          //OperandTypes.and(OperandTypes.SAME_SAME_INTEGER, OperandTypes.INTEGER).checkOperandTypes(callBinding, throwOnFailure) && super.checkOperandTypes(callBinding, throwOnFailure);
+          return OperandTypes.sequence("INSTR(<STRING>, <STRING>, <INTEGER>, <INTEGER>)", OperandTypes.STRING, OperandTypes.STRING, OperandTypes.INTEGER, OperandTypes.INTEGER).checkOperandTypes(
+              callBinding, throwOnFailure)
+              && super.checkOperandTypes(callBinding, throwOnFailure);
     default:
       throw new AssertionError();
     }

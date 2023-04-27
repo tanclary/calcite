@@ -67,6 +67,7 @@ import static org.apache.calcite.runtime.SqlFunctions.toLong;
 import static org.apache.calcite.runtime.SqlFunctions.toLongOptional;
 import static org.apache.calcite.runtime.SqlFunctions.trim;
 import static org.apache.calcite.runtime.SqlFunctions.upper;
+import static org.apache.calcite.runtime.SqlFunctions.position;
 import static org.apache.calcite.test.Matchers.within;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -1054,6 +1055,54 @@ class SqlFunctionsTest {
       // ok
     }
   }
+  @Test void testPosition() {
+    assertThat(3, is(position("c", "abcdec")));
+    assertThat(3, is(position("c", "abcdec", 2)));
+    assertThat(3, is(position("c", "abcdec", -2)));
+    assertThat(6, is(position("c", "abcdec", 4)));
+    assertThat(6, is(position("c", "abcdec",1 , 2)));
+    assertThat(3, is(position("c", "abcdec", -1, 2)));
+    assertThat(-1, is(position("f", "abcdec", 1, 1)));
+    assertThat(-1, is(position("c", "abcdec", 1, 3)));
+    try {
+      int i = position("c", "abcdec", 0, 1);
+      fail("expected error, got: " + i);
+    } catch (IllegalArgumentException e) {
+      assertThat(e.getMessage(),
+          is("From position cannot be zero"));
+    }
+    try {
+      int i = position("c", "abcdec", 1, 0);
+      fail("expected error, got: " + i);
+    } catch (IllegalArgumentException e) {
+      assertThat(e.getMessage(),
+          is("Occurrence cannot be zero"));
+    }
+    final ByteString abc = ByteString.of("aabbccddeecc", 16);
+    assertThat(3, is(position(ByteString.of("cc", 16), abc)));
+    assertThat(3, is(position(ByteString.of("cc", 16), abc, 2)));
+    assertThat(3, is(position(ByteString.of("cc", 16), abc, -2)));
+    assertThat(6, is(position(ByteString.of("cc", 16), abc, 4)));
+    assertThat(6, is(position(ByteString.of("cc", 16), abc,1 , 2)));
+    assertThat(3, is(position(ByteString.of("cc", 16), abc, -1, 2)));
+    assertThat(-1, is(position(ByteString.of("ff", 16), abc, 1, 1)));
+    assertThat(-1, is(position(ByteString.of("cc", 16), abc, 1, 3)));
+    try {
+      int i = position(ByteString.of("cc", 16), abc, 0, 1);
+      fail("expected error, got: " + i);
+    } catch (IllegalArgumentException e) {
+      assertThat(e.getMessage(),
+          is("From position cannot be zero"));
+    }
+    try {
+      int i = position(ByteString.of("cc", 16), abc, 1, 0);
+      fail("expected error, got: " + i);
+    } catch (IllegalArgumentException e) {
+      assertThat(e.getMessage(),
+          is("Occurrence cannot be zero"));
+    }
+  }
+
 
   /**
    * Tests that a date in the local time zone converts to a Unix timestamp in
