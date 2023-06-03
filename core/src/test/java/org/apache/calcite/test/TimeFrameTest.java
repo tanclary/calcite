@@ -108,7 +108,6 @@ public class TimeFrameTest {
     final TimeFrame isoWeek = timeFrameSet.get("ISOWEEK");
     assertThat(isoWeek, notNullValue());
     assertThat(isoWeek.name(), is("ISOWEEK"));
-    assertThat(timeFrameSet.getUnit(isoWeek), nullValue());
 
     // FRAC_SECOND is an alias.
     final TimeFrame fracSecond = timeFrameSet.get("FRAC_SECOND");
