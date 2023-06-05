@@ -1056,18 +1056,16 @@ public abstract class SqlLibraryOperators {
               SqlTypeFamily.ANY));
 
   /** The "DATE_TRUNC(date, timeUnit)" function (BigQuery);
-   * truncates a DATE value to the beginning of a timeUnit.
-   *
-   * TODO(CALCITE-5290): Add `DATE_TRUNC` function consistent with Postgres. Currently, Postgres
-   *                     style calls can be parsed but fail validation. */
+   * truncates a DATE value to the beginning of a timeUnit. */
   @LibraryOperator(libraries = {BIG_QUERY})
   public static final SqlFunction DATE_TRUNC =
       SqlBasicFunction.create("DATE_TRUNC",
-          ReturnTypes.FIRST_DATETIME_ARG,
-          OperandTypes.sequence("'DATE_TRUNC(<DATE>, <DATETIME_INTERVAL>)'",
-              OperandTypes.DATE, OperandTypes.dateInterval()),
-          SqlFunctionCategory.TIMEDATE)
-          .withOperandHandler(OperandHandlers.OPERAND_1_MIGHT_BE_TIME_FRAME);
+              ReturnTypes.ARG0_NULLABLE,
+              OperandTypes.sequence("'DATE_TRUNC(<DATE>, <DATETIME_INTERVAL>)'",
+                  OperandTypes.DATE_OR_TIMESTAMP, OperandTypes.dateInterval()),
+              SqlFunctionCategory.TIMEDATE)
+          .withOperandHandler(OperandHandlers.OPERAND_1_MIGHT_BE_TIME_FRAME)
+          .withKind(SqlKind.DATE_TRUNC);
 
   /** The "TIME_SUB(time, interval)" function (BigQuery);
    * subtracts an interval from a time, independent of any time zone.
@@ -1123,10 +1121,10 @@ public abstract class SqlLibraryOperators {
   @LibraryOperator(libraries = {BIG_QUERY})
   public static final SqlFunction TIMESTAMP_TRUNC =
       SqlBasicFunction.create("TIMESTAMP_TRUNC",
-          ReturnTypes.TIMESTAMP_NULLABLE,
+          ReturnTypes.ARG0_EXCEPT_DATE_NULLABLE,
           OperandTypes.sequence(
               "'TIMESTAMP_TRUNC(<TIMESTAMP>, <DATETIME_INTERVAL>)'",
-              OperandTypes.TIMESTAMP, OperandTypes.timestampInterval()),
+              OperandTypes.DATE_OR_TIMESTAMP, OperandTypes.timestampInterval()),
           SqlFunctionCategory.TIMEDATE);
 
   /** The "DATETIME_TRUNC(timestamp, timeUnit)" function (BigQuery);
@@ -1137,10 +1135,10 @@ public abstract class SqlLibraryOperators {
   @LibraryOperator(libraries = {BIG_QUERY})
   public static final SqlFunction DATETIME_TRUNC =
       SqlBasicFunction.create("DATETIME_TRUNC",
-          ReturnTypes.TIMESTAMP_NULLABLE,
+          ReturnTypes.ARG0_EXCEPT_DATE_NULLABLE,
           OperandTypes.sequence(
               "'DATETIME_TRUNC(<TIMESTAMP>, <DATETIME_INTERVAL>)'",
-              OperandTypes.TIMESTAMP, OperandTypes.timestampInterval()),
+              OperandTypes.DATE_OR_TIMESTAMP, OperandTypes.timestampInterval()),
           SqlFunctionCategory.TIMEDATE);
 
   /** The "TIMESTAMP_SECONDS(bigint)" function; returns a TIMESTAMP value
