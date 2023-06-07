@@ -430,6 +430,9 @@ public enum SqlKind {
   /** {@code DATE_DIFF} function (BigQuery Semantics). */
   DATE_ADD,
 
+  /** {@code DATE_TRUNC} function (BigQuery). */
+  DATE_TRUNC,
+
   /** {@code DATE_SUB} function (BigQuery). */
   DATE_SUB,
 
