@@ -22,6 +22,8 @@ import org.apache.calcite.util.Glossary;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+import java.nio.charset.Charset;
+
 /**
  * Type system.
  *
@@ -65,6 +67,9 @@ public interface RelDataTypeSystem {
 
   /** Returns whether the type is case sensitive. */
   boolean isCaseSensitive(SqlTypeName typeName);
+
+  /** Returns the charset of the type. */
+  Charset getCharset(SqlTypeName typeName);
 
   /** Returns whether the type can be auto increment. */
   boolean isAutoincrement(SqlTypeName typeName);

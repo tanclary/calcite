@@ -34,10 +34,10 @@ function artifact_registry_upload {
 
 ./gradlew build -x :redis:test && ./gradlew jar && ./gradlew generatePom && (
     VERSION="$(sed -n 's/^calcite\.version=\([^ ]*\).*/\1/p' gradle.properties)"
-    artifact_registry_upload core calcite-core "$VERSION"
-    artifact_registry_upload babel calcite-babel "$VERSION"
-    artifact_registry_upload linq4j calcite-linq4j "$VERSION"
-    artifact_registry_upload testkit calcite-testkit "$VERSION"
+    artifact_registry_upload core calcite-core "$VERSION-SNAPSHOT"
+    artifact_registry_upload babel calcite-babel "$VERSION-SNAPSHOT"
+    artifact_registry_upload linq4j calcite-linq4j "$VERSION-SNAPSHOT"
+    artifact_registry_upload testkit calcite-testkit "$VERSION-SNAPSHOT"
     echo
     echo "Done uploading version ${VERSION} to Looker Artifact Registry!"
 )

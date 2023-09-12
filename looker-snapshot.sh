@@ -29,7 +29,7 @@ function snapshot_upload {
         -DgeneratePom=false \
         -DpomFile="./$1/build/publications/$1/pom-default.xml" \
         -DrepositoryId=nexus \
-        -Durl=https://nexusrepo.looker.com/repository/maven-snapshots/
+        -Durl=https://us-maven.pkg.dev/prow-build-looker/looker-maven-virtual/
 }
 
 ./gradlew build -x :redis:test && ./gradlew jar && ./gradlew generatePom && (

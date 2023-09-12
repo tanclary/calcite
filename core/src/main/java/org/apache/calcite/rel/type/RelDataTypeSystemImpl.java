@@ -19,9 +19,11 @@ package org.apache.calcite.rel.type;
 import org.apache.calcite.sql.type.BasicSqlType;
 import org.apache.calcite.sql.type.SqlTypeFamily;
 import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.calcite.util.Util;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+import java.nio.charset.Charset;
 /** Default implementation of
  * {@link org.apache.calcite.rel.type.RelDataTypeSystem},
  * providing parameters from the SQL standard.
@@ -212,6 +214,11 @@ public abstract class RelDataTypeSystemImpl implements RelDataTypeSystem {
     default:
       return false;
     }
+  }
+
+  /** Use the default charset String. */
+  @Override public Charset getCharset(SqlTypeName typeName) {
+    return Util.getDefaultCharset();
   }
 
   @Override public boolean isAutoincrement(SqlTypeName typeName) {

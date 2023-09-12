@@ -1226,7 +1226,7 @@ public abstract class SqlTypeUtil {
     }
     Charset charset = type.getCharset();
     if (charset == null) {
-      charset = typeFactory.getDefaultCharset();
+      charset = typeFactory.getTypeSystem().getCharset(type.getSqlTypeName());
     }
     SqlCollation collation = type.getCollation();
     if (collation == null) {

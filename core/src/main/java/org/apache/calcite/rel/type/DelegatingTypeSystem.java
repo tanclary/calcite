@@ -20,6 +20,8 @@ import org.apache.calcite.sql.type.SqlTypeName;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+import java.nio.charset.Charset;
+
 /** Implementation of {@link org.apache.calcite.rel.type.RelDataTypeSystem}
  * that sends all methods to an underlying object. */
 public class DelegatingTypeSystem implements RelDataTypeSystem {
@@ -56,6 +58,10 @@ public class DelegatingTypeSystem implements RelDataTypeSystem {
 
   @Override public boolean isCaseSensitive(SqlTypeName typeName) {
     return typeSystem.isCaseSensitive(typeName);
+  }
+
+  @Override public Charset getCharset(SqlTypeName typeName) {
+    return typeSystem.getCharset(typeName);
   }
 
   @Override public boolean isAutoincrement(SqlTypeName typeName) {
