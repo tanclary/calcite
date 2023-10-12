@@ -1615,6 +1615,7 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
     shouldFail.fails("Column 'CURRENT_DATETIME' not found in any table");
 
     final SqlOperatorTable opTable = operatorTableFor(SqlLibrary.BIG_QUERY);
+    // testing
     sql("select current_datetime()")
         .withConformance(SqlConformanceEnum.BIG_QUERY)
         .withOperatorTable(opTable).ok();
