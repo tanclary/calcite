@@ -889,12 +889,12 @@
       <argument type='date' />
     </function>
     <function group='aggregate' name='MEDIAN' return-type='real'>
-      <formula>PERCENTILE_CONT((%1), 0.5)</formula>
+      <formula>PERCENTILE_CONT((%1), 0.5) OVER()</formula>
       <unagg-formula>%1</unagg-formula>
       <argument type='real' />
     </function>
     <function group='aggregate' name='MEDIAN' return-type='int'>
-      <formula>PERCENTILE_DISC((%1), 0.5)</formula>
+      <formula>PERCENTILE_DISC((%1), 0.5) OVER()</formula>
       <unagg-formula>%1</unagg-formula>
       <argument type='int' />
     </function>
@@ -929,13 +929,13 @@
       <argument type='date' />
     </function>
     <function group='aggregate' name='PERCENTILE' return-type='real'>
-      <formula>PERCENTILE_CONT((%1), (%2))</formula>
+      <formula>PERCENTILE_CONT((%1), (%2)) OVER()</formula>
       <unagg-formula>%1</unagg-formula>
       <argument type='real' />
       <argument type='localreal' />
     </function>
     <function group='aggregate' name='PERCENTILE' return-type='real'>
-      <formula>PERCENTILE_CONT((%1), (%2))</formula>
+      <formula>PERCENTILE_CONT((%1), (%2)) OVER()</formula>
       <unagg-formula>%1</unagg-formula>
       <argument type='int' />
       <argument type='localreal' />
