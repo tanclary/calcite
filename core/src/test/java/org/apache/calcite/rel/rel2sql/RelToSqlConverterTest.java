@@ -1278,6 +1278,18 @@ class RelToSqlConverterTest {
         .withMysql().ok(expectedMysql);
   }
 
+	/** Looker-specific for now. BigQuery doesn't yet support PERCENTILE_* 
+	 * as aggregate functions, e.g. they cannot be used without OVER. If Calcite 
+	 * pretends it supports it that's good enough, for now. */
+	@Test void testPercentileFunctionWithoutWindow() {
+		final String query = "select percentile_cont(\"product_id\", .5) "
+        + "from \"foodmart\".\"product\"";
+    final String expected = "SELECT PERCENTILE_CONT(product_id, 0.5)\n"
+        + "FROM foodmart.product";
+
+    sql(query).withBigQuery().withLibrary(SqlLibrary.BIG_QUERY).ok(expected);        
+  }
+
   /** As {@link #testSum0BecomesCoalesce()} but for windowed aggregates. */
   @Test void testWindowedSum0BecomesCoalesce() {
     final String query = "select\n"

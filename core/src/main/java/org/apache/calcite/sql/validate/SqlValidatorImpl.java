@@ -6176,7 +6176,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         break;
       case 2:
         assert op.allowsNullTreatment();
-        assert op.requiresOver();
         assert op.requiresGroupOrder() == Optionality.FORBIDDEN;
         break;
       default:
