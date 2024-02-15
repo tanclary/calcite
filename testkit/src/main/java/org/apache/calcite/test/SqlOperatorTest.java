@@ -6222,6 +6222,49 @@ public class SqlOperatorTest {
     f.checkNull("log(10, cast(null as real))");
   }
 
+  /** Test case for
+   * <a href="https://issues.apache.org/jira/browse/CALCITE-6224">[CALCITE-6224]
+   * Add LOG2 function (enabled in MYSQL, Spark library)</a>. */
+  @Test void testLog2Func() {
+    final SqlOperatorFixture f0 = Fixtures.forOperators(true);
+    f0.checkFails("^log2(4)^",
+        "No match found for function signature LOG2\\(<NUMERIC>\\)", false);
+    f0.setFor(SqlLibraryOperators.LOG2);
+    final Consumer<SqlOperatorFixture> consumer = f -> {
+      f.checkScalarApprox("log2(2)", "DOUBLE NOT NULL",
+          isWithin(1.0, 0.000001));
+      f.checkScalarApprox("log2(4)", "DOUBLE NOT NULL",
+          isWithin(2.0, 0.000001));
+      f.checkScalarApprox("log2(65536)", "DOUBLE NOT NULL",
+          isWithin(16.0, 0.000001));
+      f.checkScalarApprox("log2(2.0/3)", "DOUBLE NOT NULL",
+          isWithin(-0.5849625007211561, 0.000001));
+      f.checkScalarApprox("log2(4.0/3)", "DOUBLE NOT NULL",
+          isWithin(0.4150374992788435, 0.000001));
+      f.checkScalarApprox("log2(0.5)", "DOUBLE NOT NULL",
+          isWithin(-1.0, 0.000001));
+      f.checkScalarApprox("log2(cast(10e8 as double))", "DOUBLE NOT NULL",
+          isWithin(29.897352853986263, 0.000001));
+      f.checkScalarApprox("log2(cast(10e8 as float))", "DOUBLE NOT NULL",
+          isWithin(29.897352853986263, 0.000001));
+      f.checkScalarApprox("log2(1e+52)", "DOUBLE NOT NULL",
+          isWithin(172.74026093414284, 0.000001));
+      f.checkScalarApprox("log2(-2)", "DOUBLE NOT NULL",
+          "NaN");
+      f.checkScalarApprox("log2(0)", "DOUBLE NOT NULL",
+          "NaN");
+      f.checkScalarApprox("log2(0.0)", "DOUBLE NOT NULL",
+          "NaN");
+      f.checkScalarApprox("log2(+0.0)", "DOUBLE NOT NULL",
+          "NaN");
+      f.checkScalarApprox("log2(-0.0)", "DOUBLE NOT NULL",
+          "NaN");
+      f.checkNull("log2(null)");
+      f.checkNull("log2(cast(null as real))");
+    };
+    f0.forEachLibrary(list(SqlLibrary.MYSQL, SqlLibrary.SPARK), consumer);
+  }
+
   @Test void testRandFunc() {
     final SqlOperatorFixture f = fixture();
     f.setFor(SqlStdOperatorTable.RAND, VmName.EXPAND);

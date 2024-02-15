@@ -2764,7 +2764,7 @@ public class SqlFunctions {
   }
 
 
-  // LN, LOG, LOG10
+  // LN, LOG, LOG10, LOG2
 
   /** SQL {@code LOG(number, number2)} function applied to double values. */
   public static double log(double d0, double d1) {
@@ -2787,6 +2787,18 @@ public class SqlFunctions {
   public static double log(BigDecimal d0, BigDecimal d1) {
     return Math.log(d0.doubleValue()) / Math.log(d1.doubleValue());
   }
+
+  /** SQL {@code LOG2(number)} function applied to double values. */
+  public static double log2(double d0) {
+    return (Double.isInfinite(log(d0, 2)) && d0 == 0.0) ? Double.NaN : log(d0, 2);
+  }
+
+  /** SQL {@code LOG2(number)} function applied to
+   * BigDecimal and double values. */
+  public static double log2(BigDecimal d0) {
+    return (Double.isInfinite(log(d0, 2)) && d0.doubleValue() == 0.0) ? Double.NaN : log(d0, 2);
+  }
+
 
   // MOD
 
