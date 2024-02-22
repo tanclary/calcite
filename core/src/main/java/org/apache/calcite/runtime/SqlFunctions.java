@@ -2789,16 +2789,15 @@ public class SqlFunctions {
   }
 
   /** SQL {@code LOG2(number)} function applied to double values. */
-  public static double log2(double d0) {
-    return (Double.isInfinite(log(d0, 2)) && d0 == 0.0) ? Double.NaN : log(d0, 2);
+  public static @Nullable Double log2(double d0) {
+    return (d0 < 0.0 || d0 == 0.0) ? null : log(d0, 2);
   }
 
   /** SQL {@code LOG2(number)} function applied to
    * BigDecimal and double values. */
-  public static double log2(BigDecimal d0) {
-    return (Double.isInfinite(log(d0, 2)) && d0.doubleValue() == 0.0) ? Double.NaN : log(d0, 2);
+  public static @Nullable Double log2(BigDecimal d0) {
+    return (d0.doubleValue() < 0.0 || d0.doubleValue() == 0.0) ? null : log(d0, 2);
   }
-
 
   // MOD
 
