@@ -2157,7 +2157,7 @@ public abstract class SqlLibraryOperators {
   @LibraryOperator(libraries = {MYSQL, SPARK})
   public static final SqlFunction LOG2 =
       SqlBasicFunction.create("LOG2",
-          ReturnTypes.DOUBLE_NULLABLE,
+          ReturnTypes.DOUBLE_FORCE_NULLABLE,
           OperandTypes.NUMERIC,
           SqlFunctionCategory.NUMERIC);
 

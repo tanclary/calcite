@@ -2794,9 +2794,9 @@ public class SqlFunctions {
   }
 
   /** SQL {@code LOG2(number)} function applied to
-   * BigDecimal and double values. */
+   * BigDecimal values. */
   public static @Nullable Double log2(BigDecimal d0) {
-    return (d0.doubleValue() < 0.0 || d0.doubleValue() == 0.0) ? null : log(d0, 2);
+    return log2(d0.doubleValue());
   }
 
   // MOD
