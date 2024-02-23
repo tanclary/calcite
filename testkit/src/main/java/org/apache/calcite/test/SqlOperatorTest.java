@@ -1440,6 +1440,15 @@ public class SqlOperatorTest {
           "VARCHAR NOT NULL");
     }
   }
+  
+	@ParameterizedTest
+  @MethodSource("safeParameters")
+  void testCastFormatClauseDateTimeToString(CastType castType, SqlOperatorFixture f) {
+    // Cast DATE to String
+    f.checkString("cast(date '2018-01-30' as varchar format 'YYYY')",
+        "2018",
+        "VARCHAR NOT NULL");
+}  
 
   @Test void testCastFormatClauseStringToDateTime() {
     final SqlOperatorFixture f = fixture()

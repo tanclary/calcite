@@ -356,7 +356,7 @@ public class RexToLixTranslator implements RexVisitor<RexToLixTranslator.Result>
             : Expressions.call(
                 Expressions.new_(
                     BuiltInMethod.FORMAT_DATE.method.getDeclaringClass()),
-                BuiltInMethod.FORMAT_DATE.method, DataContext.ROOT, format, operand));
+                BuiltInMethod.FORMAT_DATE.method, format, operand));
 
       case TIME:
         return RexImpTable.optimize2(operand, Expressions.isConstantNull(format)
@@ -364,7 +364,7 @@ public class RexToLixTranslator implements RexVisitor<RexToLixTranslator.Result>
             : Expressions.call(
                 Expressions.new_(
                     BuiltInMethod.FORMAT_TIME.method.getDeclaringClass()),
-                BuiltInMethod.FORMAT_TIME.method, DataContext.ROOT, format, operand));
+                BuiltInMethod.FORMAT_TIME.method, format, operand));
 
       case TIME_WITH_LOCAL_TIME_ZONE:
         return RexImpTable.optimize2(operand, Expressions.isConstantNull(format)
@@ -373,7 +373,7 @@ public class RexToLixTranslator implements RexVisitor<RexToLixTranslator.Result>
             : Expressions.call(
                 Expressions.new_(
                     BuiltInMethod.FORMAT_TIME.method.getDeclaringClass()),
-                BuiltInMethod.FORMAT_TIME.method, DataContext.ROOT, format, operand));
+                BuiltInMethod.FORMAT_TIME.method, format, operand));
 
       case TIMESTAMP:
         return RexImpTable.optimize2(operand, Expressions.isConstantNull(format)
@@ -381,7 +381,7 @@ public class RexToLixTranslator implements RexVisitor<RexToLixTranslator.Result>
             : Expressions.call(
                 Expressions.new_(
                     BuiltInMethod.FORMAT_TIMESTAMP.method.getDeclaringClass()),
-                BuiltInMethod.FORMAT_TIMESTAMP.method, DataContext.ROOT, format, operand));
+                BuiltInMethod.FORMAT_TIMESTAMP.method, format, operand));
 
       case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
         return RexImpTable.optimize2(operand, Expressions.isConstantNull(format)
@@ -390,7 +390,7 @@ public class RexToLixTranslator implements RexVisitor<RexToLixTranslator.Result>
             : Expressions.call(
                 Expressions.new_(
                     BuiltInMethod.FORMAT_TIMESTAMP.method.getDeclaringClass()),
-                BuiltInMethod.FORMAT_TIMESTAMP.method, DataContext.ROOT, format, operand));
+                BuiltInMethod.FORMAT_TIMESTAMP.method, format, operand));
 
       case INTERVAL_YEAR:
       case INTERVAL_YEAR_MONTH:

@@ -2776,7 +2776,7 @@ public class RexImpTable {
         method = BuiltInMethod.FORMAT_TIMESTAMP.method;
       }
       return implementSafe(method,
-          ImmutableList.of(translator.getRoot(), operand0, operand1));
+          ImmutableList.of(operand0, operand1));
     }
   }
 
