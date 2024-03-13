@@ -83,7 +83,7 @@
     <function group='numeric' name='DIV' return-type='int'>
       <!-- BQ's `SAFE_DIVIDE` returns NULL for division by zero. Based on the example dialect, this seems to be what Tableau expects.
            It also always returns a real number, so cast to the expected integer. -->
-      <formula>CAST(SAFE_DIVIDE((%1) / (%2)) AS INTEGER)</formula>
+      <formula>CAST(SAFE_DIVIDE((%1), (%2)) AS INTEGER)</formula>
       <argument type='int' />
       <argument type='int' />
     </function>
