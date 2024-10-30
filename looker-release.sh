@@ -87,8 +87,8 @@ calcite.version=$NEXT_VERSION
         echo -e "  This becomes the new tip of the looker branch." >&2
         echo -e "- Prior fixups, if any..." >&2
         echo -e "- All commits from upstream..." >&2
-        echo -e "\nIf everything looks good, you can publish to Nexus with this command:\n" >&2
-        echo -e "    ./gradlew -Prelease -PskipSign publishAllPublicationsToLookerNexusRepository\n" >&2
+        echo -e "\nIf everything looks good, you can publish to the Looker Artifact Registry with this command:\n" >&2
+        echo -e "    ./looker-upload-artifact-registry.sh\n" >&2
         echo -e "And you can push the release tag and force-push the looker branch to looker-open-source with these commands:\n" >&2
         echo -e "    git push git@github.com:looker-open-source/calcite.git $NEXT_TAG"
         echo -e "    git push -f git@github.com:looker-open-source/calcite.git $LOOKER_COMMIT:looker"

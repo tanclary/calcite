@@ -20,6 +20,12 @@
 # $2 is the artifact ID
 # $3 is the version
 function artifact_registry_upload {
+    local url=""
+      if [[ "$4" == "--snapshot" ]]; then
+    url="https://us-maven.pkg.dev/prow-build-looker/looker-maven-snapshots"
+  else
+    url="https://us-maven.pkg.dev/prow-build-looker/looker-maven-private"
+  fi
     mvn deploy:deploy-file \
         -DgroupId=org.apache.calcite \
         -DartifactId="$2" \
@@ -29,15 +35,24 @@ function artifact_registry_upload {
         -DgeneratePom=false \
         -DpomFile="./$1/build/publications/$1/pom-default.xml" \
         -DrepositoryId=artifact-registry \
-        -Durl=https://us-maven.pkg.dev/prow-build-looker/looker-maven-private
+        -Durl=$url
 }
 
 ./gradlew build -x :redis:test && ./gradlew jar && ./gradlew generatePom && (
     VERSION="$(sed -n 's/^calcite\.version=\([^ ]*\).*/\1/p' gradle.properties)"
+  if [[ "$1" == "--snapshot" ]]; then
+    artifact_registry_upload core calcite-core "$VERSION-SNAPSHOT" --snapshot
+    artifact_registry_upload babel calcite-babel "$VERSION-SNAPSHOT" --snapshot
+    artifact_registry_upload linq4j calcite-linq4j "$VERSION-SNAPSHOT" --snapshot
+    artifact_registry_upload testkit calcite-testkit "$VERSION-SNAPSHOT" --snapshot
+    echo
+    echo "Done uploading snapshot version ${VERSION}-SNAPSHOT to Looker Artifact Snapshot Registry!"
+  else
     artifact_registry_upload core calcite-core "$VERSION"
     artifact_registry_upload babel calcite-babel "$VERSION"
     artifact_registry_upload linq4j calcite-linq4j "$VERSION"
     artifact_registry_upload testkit calcite-testkit "$VERSION"
     echo
     echo "Done uploading version ${VERSION} to Looker Artifact Registry!"
+  fi
 )
