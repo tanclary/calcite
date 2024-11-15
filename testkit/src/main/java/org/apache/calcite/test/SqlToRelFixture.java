@@ -47,7 +47,7 @@ public class SqlToRelFixture {
   public static final SqlTester TESTER = SqlValidatorTester.DEFAULT;
 
   public static final SqlToRelFixture DEFAULT =
-      new SqlToRelFixture("?", true, TESTER, SqlTestFactory.INSTANCE, false,
+      new SqlToRelFixture("?", false, TESTER, SqlTestFactory.INSTANCE, false,
           false, null)
           .withFactory(f ->
               f.withValidator((opTab, catalogReader, typeFactory, config) -> {

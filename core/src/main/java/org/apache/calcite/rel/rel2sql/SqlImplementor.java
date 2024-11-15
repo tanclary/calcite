@@ -1845,7 +1845,7 @@ public abstract class SqlImplementor {
       if (!selectList.equals(SqlNodeList.SINGLETON_STAR)) {
         final boolean aliasRef = expectedClauses.contains(Clause.HAVING)
             && dialect.getConformance().isHavingAlias();
-        newContext = new Context(dialect, selectList.size()) {
+        newContext = new BaseContext(dialect, selectList.size()) {
           @Override public SqlImplementor implementor() {
             return SqlImplementor.this;
           }

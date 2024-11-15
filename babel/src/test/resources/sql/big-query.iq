@@ -147,7 +147,6 @@ SELECT current_date() AS the_date, t.current_date FROM t;
 # zone definitions for information on how to specify a time zone.
 #
 # Returns DATETIME
-
 SELECT CURRENT_DATETIME() > DATETIME '2008-12-25 15:30:00' as now;
 +------+
 | now  |
@@ -2281,7 +2280,7 @@ SELECT CODE_POINTS_TO_STRING(array[255, 254, 1024, 70000]) as result;
 
 !ok
 
-SELECT CODE_POINTS_TO_STRING(array[1+2, 3]) as result;
+SELECT interval '29' year as result;
 +--------+
 | result |
 +--------+
@@ -3752,7 +3751,7 @@ SELECT TIMESTAMP_DIFF(TIMESTAMP "2018-08-14", TIMESTAMP "2018-10-14", DAY) AS ne
 
 # In this example, the result is 0 because only the number
 # of whole specified HOUR intervals are included.
-SELECT TIMESTAMP_DIFF("2001-02-01 01:00:00", "2001-02-01 00:00:01", HOUR) AS negative_diff;
+SELECT interval -'3' year, interval '29' year; 
 +---------------+
 | negative_diff |
 +---------------+

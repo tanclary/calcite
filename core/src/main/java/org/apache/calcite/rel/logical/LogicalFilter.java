@@ -125,6 +125,7 @@ public final class LogicalFilter extends Filter {
 
   /** Creates a LogicalFilter. */
   public static LogicalFilter create(final RelNode input, RexNode condition) {
+    
     return create(input, condition, ImmutableSet.of());
   }
 

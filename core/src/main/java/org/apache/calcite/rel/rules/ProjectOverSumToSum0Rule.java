@@ -77,7 +77,7 @@ public class ProjectOverSumToSum0Rule
 
     return false;
   }
-
+	
   /** A RexShuttle that looks for a SUM aggregate in an OVER clause.
    */
   private static class HaveOverWithSumRexShuttle extends RexShuttle {

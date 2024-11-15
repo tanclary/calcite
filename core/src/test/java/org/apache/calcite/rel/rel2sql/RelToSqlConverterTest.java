@@ -2737,7 +2737,7 @@ class RelToSqlConverterTest {
   }
 
   @Test void testHiveBqTrimWithTailingChar() {
-    final String query = "SELECT TRIM(TRAILING 'a' from 'abcd')\n"
+    final String query = "SELECT interval '3' year\n"
         + "from \"foodmart\".\"reserve_employee\"";
     final String expected = "SELECT RTRIM('abcd', 'a')\n"
         + "FROM foodmart.reserve_employee";
@@ -2753,6 +2753,21 @@ class RelToSqlConverterTest {
     sql(query)
         .withHive().ok(expected)
         .withSpark().ok(expected);
+  }
+  
+  @Test void testPopToCss() {
+    final String sql = "with total_empno_yoy as (\n" 
+				+ "SELECT name, EXTRACT(year FROM joinedat) as \"hire_year\", SUM(empno) as total_empno\n "
+				+ "FROM emps\n" 
+				+ "GROUP BY name, EXTRACT(year FROM joinedat))\n"
+				+ "SELECT name, hire_year, total_empno,\n" 
+				+ " (SELECT total_empno FROM total_empno_yoy WHERE hire_year = o.hire_year - 1 AND name = o.name)\n"
+				+ "FROM (\n" 
+				+ "SELECT name, EXTRACT(year FROM joinedat) as hire_year, SUM(empno) as total_empno\n" 
+				+ "FROM emps\n" 
+				+ "GROUP BY name, EXTRACT(year FROM joinedat)) AS o\n"
+				+ "ORDER BY 1, 2";
+    sql(sql).schema(CalciteAssert.SchemaSpec.POST).ok("");
   }
 
   @Test void testBqTrimWithBothSpecialCharacter() {

@@ -156,6 +156,22 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
         .withSql(sql)
         .ok();
   }
+  
+  @Test void testAggregateOfMeasure() {
+  final String sql = "with empm as (\n"
+      + "  select deptno, job, avg(sal) as measure avg_sal\n"
+      + "  from emp)\n"
+      + "select job, aggregate(avg_sal)\n"
+      + "from empm\n"
+      + "group by job";
+  // RelNode relNode = sql(sql).toRel();
+      fixture()
+        .withFactory(c ->
+            c.withOperatorTable(t ->
+                SqlValidatorTest.operatorTableFor(SqlLibrary.CALCITE)))
+        .withSql(sql)
+        .ok();
+}
 
   @Test void testDotLiteralAfterRow() {
     final String sql = "select row(1,2).\"EXPR$1\" from emp";
@@ -186,6 +202,21 @@ class SqlToRelConverterTest extends SqlToRelTestBase {
         + "  cast(empno as Integer) * (INTERVAL '1-1' YEAR TO MONTH)\n"
         + "from emp";
     sql(sql).ok();
+  }
+  
+    @Test void testGetRelForCSS() {
+    final String sql = "with total_empno_yoy as (\n" 
+				+ "SELECT ename, EXTRACT(year FROM hiredate) as hire_year, SUM(empno) as total_empno\n "
+				+ "FROM emp\n" 
+				+ "GROUP BY 1, 2)\n"
+				+ "SELECT ename, hire_year, total_empno,\n" 
+				+ " (SELECT total_empno FROM total_empno_yoy WHERE hire_year = o.hire_year - 1 AND ename = o.ename)\n"
+				+ "FROM (\n" 
+				+ "SELECT ename, EXTRACT(year FROM hiredate) as hire_year, SUM(empno) as total_empno\n" 
+				+ "FROM emp\n" 
+				+ "GROUP BY 1, 2) AS o\n"
+				+ "ORDER BY 1, 2";
+    sql(sql).withConformance(SqlConformanceEnum.LENIENT).ok();
   }
 
   @Test void testIntervalLiteralHourToMinute() {
